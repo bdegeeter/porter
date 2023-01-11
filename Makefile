@@ -8,16 +8,12 @@ GRPC_PORT=8988
 grpc-test: | $(GRPCURL_HOME)
 	@echo "Testing gRPC service methods"
 	@echo ""
-	@echo ""
-	@echo "Plain Text Testing SayHello"
-	$(GRPCURL_CMD) -plaintext -d '{"name": "porter"}' -authority $(GRPC_HOST) $(GRPC_HOST):$(GRPC_PORT) helloworld.Greeter/SayHello
-	@echo "Plain Text Testing SayHelloAgain"
-	$(GRPCURL_CMD) -plaintext -d '{"name": "porter"}' -authority $(GRPC_HOST) $(GRPC_HOST):$(GRPC_PORT) helloworld.Greeter/SayHelloAgain
+	go run tests/grpc/client/main.go
 
 .PHONY: grpc-list
 grpc-list:
 	$(GRPCURL_CMD) -plaintext -authority $(GRPC_HOST) $(GRPC_HOST):$(GRPC_PORT) list
-	$(GRPCURL_CMD) -plaintext -authority $(GRPC_HOST) $(GRPC_HOST):$(GRPC_PORT) list helloworld.Greeter
+	$(GRPCURL_CMD) -plaintext -authority $(GRPC_HOST) $(GRPC_HOST):$(GRPC_PORT) list installation.v1alpha1.Installations
 
 .PHONY: grpc-serve
 grpc-serve:

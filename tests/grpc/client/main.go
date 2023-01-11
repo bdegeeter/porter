@@ -14,13 +14,16 @@ import (
 	"google.golang.org/grpc"
 )
 
+var grpcSvcPort = "8988"
+
 func main() {
+	log.Println("grpc client test")
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
 }
 func run() error {
-	connectTo := "127.0.0.1:8080"
+	connectTo := fmt.Sprintf("127.0.0.1:%s", grpcSvcPort)
 	conn, err := grpc.Dial(connectTo, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("failed to connect to PetStoreService on %s: %w", connectTo, err)
