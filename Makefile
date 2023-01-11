@@ -1,41 +1,8 @@
 GRPCURL_VERSION=1.8.7
-GRPCURL_HOME=$(PWD)/.grpcurl
-GRPCURL_CMD=$(PWD)/.grpcurl/grpcurl
+GRPCURL_CMD=grpcurl
 GRPC_HOST=grpc.localtest.me
 GRPC_PORT=8988
 
-OS=$(shell uname -s)
-ifeq ($(OS),Darwin)
-	MAGE_OS=macOS
-	SYS_OS=darwin
-	GRPCURL_OS=osx
-else ifeq ($(OS),Linux)
-	MAGE_OS=Linux
-	SYS_OS=linux
-	GRPCURL_OS=linux
-else
-	MAGE_OS=unknown
-endif
-
-$(GRPCURL_HOME):
-	@mkdir -p $(GRPCURL_HOME)
-	curl -Lo grpcurl.tgz "https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_$(GRPCURL_VERSION)_$(GRPCURL_OS)_x86_64.tar.gz"
-	tar xzvf grpcurl.tgz -C $(GRPCURL_HOME)
-	rm -f grpcurl.tgz
-	chmod +x $(GRPCURL_CMD)
-
-.PHONY: build-grpc
-build-grpc:
-	@docker build --rm -t vulcan-grpc:local -f Dockerfile .
-
-.PHONY: load-grpc-image
-load-grpc-image:
-	@$(KIND) load docker-image vulcan-grpc:local
-
-.PHONY: grpc-generate-cert
-grpc-generate-cert:
-	@openssl req -new -nodes -keyout grpc-porter-tls.key -out grpc-porter.csr -config tests/grpc/openssl.cnf -subj "/C=CN/ST=Wa/L=Seattle/O=Porter-Dev/OU=ContainerService/CN=$(GRPC_HOST)"
-	@openssl x509 -req -days 3650 -in grpc-porter.csr -signkey grpc-porter-tls.key -out grpc-porter-tls.crt -extensions v3_req -extfile tests/grpc/openssl.cnf
 
 .PHONY: grpc-test
 grpc-test: | $(GRPCURL_HOME)

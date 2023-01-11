@@ -54,6 +54,10 @@ func CheckGoVersion() {
 	tools.EnforceGoVersion(GoVersion)
 }
 
+func GenerateGRPCProtobufs() {
+	mg.SerialDeps(buildGRPCProtocImage)
+}
+
 // Builds all code artifacts in the repository
 func Build() {
 	mg.SerialDeps(InstallBuildTools, BuildPorter, BuildExecMixin, BuildAgent, DocsGen)
@@ -61,7 +65,7 @@ func Build() {
 }
 
 func InstallBuildTools() {
-	mg.Deps(setup.EnsureProtobufTools)
+	mg.Deps(setup.EnsureProtobufTools, setup.EnsureGRPCurl, setup.EnsureBufBuild)
 }
 
 // Build the porter client and runtime
@@ -261,6 +265,22 @@ func BuildImages() {
 	registry := getRegistry()
 
 	buildImages(registry, info)
+}
+
+func buildGRPCProtocImage() {
+	var g errgroup.Group
+
+	enableBuildKit := "DOCKER_BUILDKIT=1"
+	g.Go(func() error {
+		img := "protoc:local"
+		err := shx.Command("docker", "build", "-t", img, "-f", "build/protoc.Dockerfile", ".").
+			Env(enableBuildKit).RunV()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	mgx.Must(g.Wait())
 }
 
 func buildImages(registry string, info releases.GitMetadata) {
