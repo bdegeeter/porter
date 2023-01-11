@@ -8,9 +8,10 @@ import (
 	"go.uber.org/zap"
 	//"go.uber.org/zap/zapcore"
 
-	hw "get.porter.sh/porter/gen/proto/go/helloworld/v1alpha"
-	"get.porter.sh/porter/pkg/grpc/helloworld"
+	igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
+	"get.porter.sh/porter/pkg/grpc/installation"
 	"get.porter.sh/porter/pkg/porter"
+
 	//"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -49,9 +50,8 @@ func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	helloworldServer := &helloworld.HelloWorldServer{}
-
-	hw.RegisterGreeterServer(srv, helloworldServer)
+	isrv := &installation.InstallationServer{}
+	igrpc.RegisterInstallationsServer(srv, isrv)
 	healthServer.SetServingStatus(s.config.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {

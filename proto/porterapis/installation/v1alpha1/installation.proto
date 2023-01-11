@@ -1,0 +1,38 @@
+syntax = "proto3";
+//option go_package = "get.porter.sh/porter/gen/proto/go/installation/v1alpha1";
+package installation.v1alpha1;
+
+service Installations {
+  rpc ListInstallations (ListInstallationsRequest) returns (ListInstallationsResponse) {} 
+}
+
+enum InstallationState {
+  INSTALLED = 0;
+  UNINSTALLED = 1;
+  DEFINED = 2;
+}
+
+enum InstallationStatus {
+  SUCCEEDED = 0;
+  FAILED = 1;
+  INSTALLING = 2;
+}
+
+message Bundle {
+  string repository = 1;
+  string version = 2;
+}
+
+message Installation {
+  string name = 1;
+  string namespace = 2;
+  Bundle bundle = 3;
+  InstallationState state = 4;
+  InstallationStatus status = 5;
+}
+
+message ListInstallationsRequest {}
+
+message ListInstallationsResponse {
+  repeated Installation installation = 1; 
+}
