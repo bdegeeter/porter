@@ -1,8 +1,9 @@
-package grpc
+package main
 
 import (
 	//"context"
 	"fmt"
+	"log"
 	"net"
 
 	"go.uber.org/zap"
@@ -30,6 +31,29 @@ type Config struct {
 	ServiceName string `mapstructure:"grpc-service-name"`
 }
 
+func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	logger, err := zap.NewDevelopmentConfig().Build()
+	if err != nil {
+		return fmt.Errorf("Unable to build logger")
+	}
+	cfg := Config{
+		Port:        8080,
+		ServiceName: "local",
+	}
+	srv, err := NewServer(&cfg, logger)
+	if err != nil {
+		return fmt.Errorf("Unable to start server")
+	}
+	srv.ListenAndServe()
+	return nil
+}
+
 func NewServer(config *Config, logger *zap.Logger) (*PorterGRPCService, error) {
 	srv := &PorterGRPCService{
 		config: config,
@@ -45,7 +69,7 @@ func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 		fmt.Println("failed to listen")
 		s.log.Fatal("failed to listen", zap.Int("port", s.config.Port))
 	}
-
+	s.log.Info(fmt.Sprintf("Serving on 0.0.0.0:%v", s.config.Port))
 	srv := grpc.NewServer()
 	healthServer := health.NewServer()
 	reflection.Register(srv)
@@ -53,13 +77,9 @@ func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 	isrv := &installation.InstallationServer{}
 	igrpc.RegisterInstallationsServer(srv, isrv)
 	healthServer.SetServingStatus(s.config.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
-
-	go func() {
-		if err := srv.Serve(listener); err != nil {
-			fmt.Println("failed to serve")
-			s.log.Fatal("failed to serve", zap.Error(err))
-		}
-	}()
-
+	if err := srv.Serve(listener); err != nil {
+		fmt.Println("failed to serve")
+		s.log.Fatal("failed to serve", zap.Error(err))
+	}
 	return srv
 }
