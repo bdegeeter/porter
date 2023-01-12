@@ -4,29 +4,30 @@ import (
 	"context"
 	"log"
 
-	igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
+	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
+	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
 )
 
 // server is used to implement helloworld.GreeterServer.
-type InstallationServer struct {
-	igrpc.UnimplementedInstallationsServer
+type PorterServer struct {
+	pGRPC.UnimplementedPorterBundleServer
 }
 
 // SayHello implements helloworld.GreeterServer
-func (s *InstallationServer) ListInstallations(ctx context.Context, in *igrpc.ListInstallationsRequest) (*igrpc.ListInstallationsResponse, error) {
+func (s *PorterServer) ListInstallations(ctx context.Context, in *iGRPC.ListInstallationsRequest) (*iGRPC.ListInstallationsResponse, error) {
 	log.Printf("IN LIST INSTALLATIONS")
-	inst := igrpc.Installation{
+	inst := iGRPC.Installation{
 		Name:      "test installation",
 		Namespace: "foo",
-		Bundle: &igrpc.Bundle{
+		Bundle: &iGRPC.Bundle{
 			Repository: "test.repo",
 			Version:    "v1.0.0",
 		},
-		State:  igrpc.InstallationState_INSTALLED,
-		Status: igrpc.InstallationStatus_SUCCEEDED,
+		State:  iGRPC.InstallationState_INSTALLED,
+		Status: iGRPC.InstallationStatus_SUCCEEDED,
 	}
-	insts := []*igrpc.Installation{&inst}
-	res := igrpc.ListInstallationsResponse{
+	insts := []*iGRPC.Installation{&inst}
+	res := iGRPC.ListInstallationsResponse{
 		Installation: insts,
 	}
 	return &res, nil

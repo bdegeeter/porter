@@ -55,7 +55,9 @@ func CheckGoVersion() {
 }
 
 func GenerateGRPCProtobufs() {
-	mg.SerialDeps(buildGRPCProtocImage)
+	mg.Deps(setup.EnsureBufBuild)
+	must.Command("buf", "build").In("proto").RunV()
+	must.Command("buf", "generate").In("proto").RunV()
 }
 
 // Builds all code artifacts in the repository
@@ -250,6 +252,21 @@ func TestSmoke() error {
 
 	// Adding -count to prevent go from caching the test results.
 	return shx.Command("go", "test", "-count=1", "-timeout=20m", "-tags", "smoke", v, "./tests/smoke/...").CollapseArgs().RunV()
+}
+
+// Run grpc service tests
+func TestGRPCService() {
+	var run string
+	runTest := os.Getenv("PORTER_RUN_TEST")
+	if runTest != "" {
+		run = "-run=" + runTest
+	}
+
+	verbose := ""
+	if mg.Verbose() {
+		verbose = "-v"
+	}
+	must.Command("go", "test", verbose, "-timeout=5m", run, "./tests/grpc/...").CollapseArgs().RunV()
 }
 
 func getRegistry() string {

@@ -49,7 +49,7 @@ func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	isrv := &installation.InstallationServer{}
+	isrv := &installation.PorterServer{}
 	igrpc.RegisterInstallationsServer(srv, isrv)
 	healthServer.SetServingStatus(s.config.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 

@@ -1,0 +1,17 @@
+syntax = "proto3";
+//option go_package = "get.porter.sh/porter/gen/proto/go/installation/v1alpha1";
+package porter.v1alpha1;
+
+import "installation/v1alpha1/installation.proto";
+
+service PorterBundle {
+  //Returns a list of all installations
+  rpc ListInstallations (installation.v1alpha1.ListInstallationsRequest) returns (installation.v1alpha1.ListInstallationsResponse) {}
+
+  //Returns a list of all runs for a single installation
+  rpc ListInstallationRuns(installation.v1alpha1.Installation) returns(installation.v1alpha1.ListInstallationRunsResponse) {}
+
+  //Returns a list of all outputs for a single installation run
+  //Must support a "latest" run id
+  rpc ListInstallationRunOutputs(installation.v1alpha1.InstallationRunRequest) returns(installation.v1alpha1.ListInstallationRunOutputsResponse) {}
+}
