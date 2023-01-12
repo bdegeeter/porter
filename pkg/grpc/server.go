@@ -42,7 +42,6 @@ func NewServer(config *Config, logger *zap.Logger) (*PorterGRPCService, error) {
 func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.config.Port))
 	if err != nil {
-		fmt.Println("failed to listen")
 		s.log.Fatal("failed to listen", zap.Int("port", s.config.Port))
 	}
 
@@ -56,7 +55,6 @@ func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			fmt.Println("failed to serve")
 			s.log.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
