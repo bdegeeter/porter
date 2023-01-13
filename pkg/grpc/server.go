@@ -8,7 +8,8 @@ import (
 	"go.uber.org/zap"
 	//"go.uber.org/zap/zapcore"
 
-	igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
+	//igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
+	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
 	"get.porter.sh/porter/pkg/grpc/installation"
 	"get.porter.sh/porter/pkg/porter"
 
@@ -49,8 +50,12 @@ func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	isrv := &installation.PorterServer{}
-	igrpc.RegisterInstallationsServer(srv, isrv)
+	isrv, err := installation.NewPorterService()
+	if err != nil {
+		panic(err)
+	}
+
+	pGRPC.RegisterPorterBundleServer(srv, isrv)
 	healthServer.SetServingStatus(s.config.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {

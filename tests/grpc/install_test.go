@@ -7,6 +7,7 @@ import (
 
 	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
+	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -14,7 +15,9 @@ import (
 
 func TestInstall_installationMessage(t *testing.T) {
 	t.Parallel()
+
 	ctx := context.Background()
+	//ctx := portercontext.New()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("failed to dial bufnet: %v", err)

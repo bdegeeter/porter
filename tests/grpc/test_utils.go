@@ -45,8 +45,11 @@ func (s *TestPorterGRPCService) ListenAndServe() *grpc.Server {
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	isrv := &installation.PorterServer{}
-	pGRPC.RegisterPorterBundleServer(srv, isrv)
+	pSvc, err := installation.NewPorterService()
+	if err != nil {
+		panic(err)
+	}
+	pGRPC.RegisterPorterBundleServer(srv, pSvc)
 	healthServer.SetServingStatus("test-health", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {

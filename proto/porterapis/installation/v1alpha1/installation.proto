@@ -29,6 +29,7 @@ message Installation {
   InstallationStatus status = 5;
 }
 
+//Installations
 message ListInstallationsRequest {
   string name = 1;
   string namespace = 2;
@@ -44,6 +45,9 @@ message ListInstallationsResponse {
 message InstallationRequest {
   Installation installation = 1;
 }
+
+
+//InstallationRuns
 message InstallationRun {
   int64 id = 1;
   Installation installation = 2;
@@ -56,5 +60,5 @@ message ListInstallationRunsResponse {
 message InstallationRunRequest {
   InstallationRun run = 1;
 }
-
+//InstallationRunOutputs
 message ListInstallationRunOutputsResponse {}
