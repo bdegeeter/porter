@@ -51,7 +51,16 @@ func (s *TestPorterGRPCService) ListenAndServe() *grpc.Server {
 	}
 	pGRPC.RegisterPorterBundleServer(srv, pSvc)
 	healthServer.SetServingStatus("test-health", grpc_health_v1.HealthCheckResponse_SERVING)
-
+	// Setup the storage plugin
+	// testP := porter.New()
+	// var cfg interface{}
+	// plug, err := mongodb_docker.NewPlugin(testP.Context, cfg)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// go func() {
+	// 	plugins.Serve(testP.Context, storageplugins.PluginInterface, plug, storageplugins.PluginProtocolVersion)
+	// }()
 	go func() {
 		if err := srv.Serve(lis); err != nil {
 			fmt.Println("failed to serve")

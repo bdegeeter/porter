@@ -1,13 +1,13 @@
 package grpc
 
 import (
+	//"fmt"
 	"context"
 	//"fmt"
 	"testing"
 
 	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
-	"get.porter.sh/porter/pkg/portercontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
