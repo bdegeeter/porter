@@ -83,6 +83,7 @@ func (c *PluginConnection) String() string {
 // Start establishes a connection to the plugin.
 // * pluginCfg is the resolved plugin configuration section from the Porter config file
 func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error {
+	fmt.Println("IN START")
 	ctx, span := tracing.StartSpan(ctx,
 		attribute.String("plugin-key", c.key.String()))
 	defer span.EndSpan()

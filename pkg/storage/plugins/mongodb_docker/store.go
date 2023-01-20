@@ -46,6 +46,7 @@ func NewStore(c *portercontext.Context, cfg PluginConfig) *Store {
 // The plugin itself is responsible for ensuring it was called.
 // Close is called automatically when the plugin is used by Porter.
 func (s *Store) Connect(ctx context.Context) error {
+	fmt.Println("CONNECTING")
 	if s.Store != nil {
 		return nil
 	}
@@ -64,11 +65,13 @@ func (s *Store) Connect(ctx context.Context) error {
 }
 
 func (s *Store) Close() error {
+	fmt.Println("CLOSING")
 	if s.Store == nil {
 		return nil
 	}
 
 	err := s.Store.Close()
+	fmt.Println("CLOSED")
 	s.Store = nil
 	return err
 }

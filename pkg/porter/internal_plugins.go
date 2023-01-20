@@ -61,6 +61,8 @@ func (o *RunInternalPluginOpts) parsePluginConfig(c *portercontext.Context) (int
 }
 
 func (p *Porter) RunInternalPlugins(ctx context.Context, opts RunInternalPluginOpts) (err error) {
+	log := tracing.LoggerFromContext(ctx)
+	log.Debug("Hello from RunInternalPlugins")
 	err = opts.Validate()
 	if err != nil {
 		return err

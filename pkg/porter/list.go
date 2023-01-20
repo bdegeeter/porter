@@ -239,6 +239,7 @@ func NewDisplayRun(run storage.Run) DisplayRun {
 
 // ListInstallations lists installed bundles.
 func (p *Porter) ListInstallations(ctx context.Context, opts ListOptions) (DisplayInstallations, error) {
+	fmt.Println("INSIDE LISTINGINSTALLATIONS")
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 
