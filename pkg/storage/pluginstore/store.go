@@ -54,6 +54,8 @@ func NewStoragePluginConfig() pluggable.PluginTypeConfig {
 // The plugin itself is responsible for ensuring it was called.
 // Close is called automatically when the plugin is used by Porter.
 func (s *Store) Connect(ctx context.Context) error {
+	fmt.Println("CONNECTING PLUGINSTORE")
+	fmt.Printf("STORE PLUGIN: %+v\n", s.plugin)
 	if s.plugin != nil {
 		return nil
 	}
@@ -82,9 +84,11 @@ func (s *Store) Connect(ctx context.Context) error {
 }
 
 func (s *Store) Close() error {
+	fmt.Println("CALLING CLOSE")
 	if s.conn != nil {
 		s.conn.Close(context.Background())
 		s.conn = nil
+		//s.plugin = nil
 	}
 	return nil
 }

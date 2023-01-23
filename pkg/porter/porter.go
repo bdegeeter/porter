@@ -115,6 +115,7 @@ func (p *Porter) Connect(ctx context.Context) error {
 
 // Close releases resources used by Porter before terminating the application.
 func (p *Porter) Close() error {
+	fmt.Println("CLOSING")
 	// Shutdown our plugins
 	var bigErr *multierror.Error
 
@@ -122,16 +123,19 @@ func (p *Porter) Close() error {
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
+	fmt.Println("CLOSED SECRETS")
 
 	err = p.Storage.Close()
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
+	fmt.Println("CLOSED STORAGE")
 
 	err = p.Config.Close()
 	if err != nil {
 		bigErr = multierror.Append(bigErr, err)
 	}
+	fmt.Println("CLOSED CONFIG")
 
 	return bigErr.ErrorOrNil()
 }
