@@ -11,31 +11,34 @@ import (
 
 // server is used to implement helloworld.GreeterServer.
 type PorterServer struct {
-	porter *porter.Porter
+	//base.BaseGRPCService
+	Porter *porter.Porter
 	pGRPC.UnimplementedPorterBundleServer
 }
 
-func NewPorterService() (*PorterServer, error) {
-	p := porter.New()
-	return &PorterServer{porter: p}, nil
+func NewPorterService(p *porter.Porter) (*PorterServer, error) {
+	return &PorterServer{Porter: p}, nil
+	//return &PorterServer{}, nil
 }
 
 func (s *PorterServer) ListInstallations(ctx context.Context, in *iGRPC.ListInstallationsRequest) (*iGRPC.ListInstallationsResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
-
-	err := s.porter.Connect(ctx)
+	p := porter.New()
+	err := p.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer s.porter.Close()
+	defer p.Close()
+	// cleanup := s.Connect()
+	// defer cleanup()
+	//defer s.Porter.Storage.Close()
 	opts := porter.ListOptions{}
-
-	installations, err := s.porter.ListInstallations(ctx, opts)
+	//installations, err := s.Porter.ListInstallations(ctx, opts)
+	installations, err := p.ListInstallations(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
-
 	insts := []*iGRPC.Installation{}
 	for _, pInst := range installations {
 		inst := iGRPC.Installation{

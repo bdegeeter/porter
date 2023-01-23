@@ -49,6 +49,7 @@ func (s *TestPorterGRPCService) ListenAndServe() *grpc.Server {
 	if err != nil {
 		panic(err)
 	}
+	pSvc.Porter.Config.SetPorterPath("porter")
 	pGRPC.RegisterPorterBundleServer(srv, pSvc)
 	healthServer.SetServingStatus("test-health", grpc_health_v1.HealthCheckResponse_SERVING)
 

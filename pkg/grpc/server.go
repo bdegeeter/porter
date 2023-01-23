@@ -2,28 +2,52 @@ package grpc
 
 import (
 	//"context"
+	"context"
 	"fmt"
 	"net"
+	"net/http"
+	"os"
 
-	"go.uber.org/zap"
 	//"go.uber.org/zap/zapcore"
 
 	//igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
 	"get.porter.sh/porter/pkg/grpc/installation"
 	"get.porter.sh/porter/pkg/porter"
+	"get.porter.sh/porter/pkg/tracing"
 
 	//"go.opentelemetry.io/otel/attribute"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
+var (
+	reg = prometheus.NewRegistry()
+	// Create some standard server metrics.
+	grpcMetrics = grpc_prometheus.NewServerMetrics()
+
+	// Create a customized counter metric.
+	customizedCounterMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "demo_server_say_hello_method_handle_count",
+		Help: "Total number of RPCs handled on the server.",
+	}, []string{"name"})
+)
+
+func init() {
+	reg.MustRegister(grpcMetrics, customizedCounterMetric)
+	customizedCounterMetric.WithLabelValues("Test")
+}
+
 type PorterGRPCService struct {
-	Porter *porter.Porter
-	config *Config
-	log    *zap.Logger
+	Porter      *porter.Porter
+	config      *Config
+	ctx         context.Context
+	CalledCount *int
 }
 
 type Config struct {
@@ -31,38 +55,66 @@ type Config struct {
 	ServiceName string `mapstructure:"grpc-service-name"`
 }
 
-func NewServer(config *Config, logger *zap.Logger) (*PorterGRPCService, error) {
+func NewServer(ctx context.Context, config *Config) (*PorterGRPCService, error) {
+	// log := tracing.LoggerFromContext(ctx)
+	// log.Debug("HELLO")
+	p := porter.New()
+	var c int
 	srv := &PorterGRPCService{
-		config: config,
-		log:    logger,
+		Porter:      p,
+		config:      config,
+		ctx:         ctx,
+		CalledCount: &c,
 	}
 
 	return srv, nil
 }
 
-func (s *PorterGRPCService) ListenAndServe() *grpc.Server {
+func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
+	ctx, log := tracing.StartSpan(s.ctx)
+	err := s.Porter.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer s.Porter.Close()
+	defer log.EndSpan()
+	log.Infof("Starting gRPC on %v", s.config.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.config.Port))
 	if err != nil {
-		s.log.Fatal("failed to listen", zap.Int("port", s.config.Port))
+		return nil, fmt.Errorf("failed to listen on %d: %s", s.config.Port, err)
 	}
+	httpServer := &http.Server{Handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), Addr: fmt.Sprintf("0.0.0.0:%d", 9092)}
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+	)
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	isrv, err := installation.NewPorterService()
+	isrv, err := installation.NewPorterService(s.Porter)
+	//isrv, err := installation.NewPorterService()
 	if err != nil {
 		panic(err)
 	}
 
 	pGRPC.RegisterPorterBundleServer(srv, isrv)
 	healthServer.SetServingStatus(s.config.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
-
+	grpc_prometheus.Register(srv)
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			s.log.Fatal("failed to serve", zap.Error(err))
+			log.Errorf("failed to serve: %s", err)
+			os.Exit(1)
 		}
 	}()
-
-	return srv
+	http.Handle("/metrics", promhttp.Handler())
+	// Start your http server for prometheus.
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil {
+			log.Errorf("Unable to start a http server.")
+			os.Exit(1)
+		}
+	}()
+	grpcMetrics.InitializeMetrics(srv)
+	return srv, nil
 }

@@ -4,29 +4,27 @@ import (
 	"context"
 	"time"
 
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/spf13/viper"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 type Shutdown struct {
-	logger                *zap.Logger
 	tracerProvider        *sdktrace.TracerProvider
 	serverShutdownTimeout time.Duration
 }
 
-func NewShutdown(serverShutdownTimeout time.Duration, logger *zap.Logger) (*Shutdown, error) {
+func NewShutdown(serverShutdownTimeout time.Duration, ctx context.Context) (*Shutdown, error) {
 	srv := &Shutdown{
-		logger:                logger,
 		serverShutdownTimeout: serverShutdownTimeout,
 	}
 
 	return srv, nil
 }
 
-func (s *Shutdown) Graceful(stopCh <-chan struct{}, grpcServer *grpc.Server) {
-	ctx := context.Background()
+func (s *Shutdown) Graceful(stopCh <-chan struct{}, grpcServer *grpc.Server, ctx context.Context) {
+	ctx, log := tracing.StartSpan(ctx)
 
 	// wait for SIGTERM or SIGINT
 	<-stopCh
@@ -42,13 +40,13 @@ func (s *Shutdown) Graceful(stopCh <-chan struct{}, grpcServer *grpc.Server) {
 	// stop OpenTelemetry tracer provider
 	if s.tracerProvider != nil {
 		if err := s.tracerProvider.Shutdown(ctx); err != nil {
-			s.logger.Warn("stopping tracer provider", zap.Error(err))
+			log.Warnf("stopping tracer provider: ", err)
 		}
 	}
 
 	// determine if the GRPC was started
 	if grpcServer != nil {
-		s.logger.Info("Shutting down GRPC server", zap.Duration("timeout", s.serverShutdownTimeout))
+		log.Infof("Shutting down GRPC server: ", s.serverShutdownTimeout)
 		grpcServer.GracefulStop()
 	}
 
