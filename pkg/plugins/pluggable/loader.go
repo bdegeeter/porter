@@ -55,7 +55,6 @@ func NewPluginLoader(c *config.Config) *PluginLoader {
 // the typed interface, a cleanup function to stop the plugin when finished communicating with it,
 // and an error if the plugin could not be loaded.
 func (l *PluginLoader) Load(ctx context.Context, pluginType PluginTypeConfig) (*PluginConnection, error) {
-	fmt.Println("LOADING PLUGIN CONFIG")
 	ctx, span := tracing.StartSpan(ctx,
 		attribute.String("plugin-interface", pluginType.Interface),
 		attribute.String("requested-protocol-version", fmt.Sprintf("%v", pluginType.ProtocolVersion)))

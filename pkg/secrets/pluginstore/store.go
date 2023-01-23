@@ -113,7 +113,6 @@ func (s *Store) Connect(ctx context.Context) error {
 }
 
 func (s *Store) Close() error {
-	fmt.Println("CLOSING STORE")
 	if s.conn != nil {
 		s.conn.Close(context.Background())
 		s.conn = nil

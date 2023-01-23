@@ -16,6 +16,7 @@ import (
 	storageplugins "get.porter.sh/porter/pkg/storage/plugins"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb"
 	"get.porter.sh/porter/pkg/storage/plugins/mongodb_docker"
+	"get.porter.sh/porter/pkg/tracing"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -78,18 +79,18 @@ func (p *Porter) RunInternalPlugins(ctx context.Context, opts RunInternalPluginO
 		return fmt.Errorf("could not create an instance of the requested internal plugin %s: %w", opts.Key, err)
 	}
 
-	// defer func() {
-	// 	if panicErr := recover(); err != nil {
-	// 		err = fmt.Errorf("%v", panicErr)
-	// 	}
+	defer func() {
+		if panicErr := recover(); err != nil {
+			err = fmt.Errorf("%v", panicErr)
+		}
 
-	// 	if closer, ok := impl.(closablePlugin); ok {
-	// 		if err = closer.Close(ctx); err != nil {
-	// 			log := tracing.LoggerFromContext(ctx)
-	// 			log.Error(fmt.Errorf("error stopping the %s plugin: %w", opts.Key, err))
-	// 		}
-	// 	}
-	// }()
+		if closer, ok := impl.(closablePlugin); ok {
+			if err = closer.Close(ctx); err != nil {
+				log := tracing.LoggerFromContext(ctx)
+				log.Error(fmt.Errorf("error stopping the %s plugin: %w", opts.Key, err))
+			}
+		}
+	}()
 
 	plugins.Serve(p.Context, selectedPlugin.Interface, impl, selectedPlugin.ProtocolVersion)
 	return err // Return the error that may have been set during recover above

@@ -83,14 +83,12 @@ func (c *PluginConnection) String() string {
 // Start establishes a connection to the plugin.
 // * pluginCfg is the resolved plugin configuration section from the Porter config file
 func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error {
-	fmt.Println("IN START")
 	ctx, span := tracing.StartSpan(ctx,
 		attribute.String("plugin-key", c.key.String()))
 	defer span.EndSpan()
 
 	// Create a command to run the plugin
 	if c.key.IsInternal {
-		fmt.Println("IS INTERNAL")
 		porterPath, err := c.config.GetPorterPath(ctx)
 		if err != nil {
 			return fmt.Errorf("could not determine the path to the porter pluginProtocol: %w", err)
@@ -98,7 +96,6 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 
 		c.pluginCmd = c.config.NewCommand(ctx, porterPath, "plugin", "run", c.key.String())
 	} else {
-		fmt.Println("NOT INTERNAL")
 		pluginPath, err := c.config.GetPluginPath(c.key.Binary)
 		if err != nil {
 			return span.Error(err)
@@ -108,7 +105,6 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		c.pluginCmd = c.config.NewCommand(ctx, pluginPath, "run", c.key.String())
 	}
 	span.SetAttributes(attribute.String("plugin-path", c.pluginCmd.Path))
-	fmt.Printf("pluginCmd: %+v\n", c.pluginCmd)
 
 	// Configure the command
 	c.pluginCmd.Stdin = pluginCfg
@@ -129,7 +125,6 @@ func (c *PluginConnection) Start(ctx context.Context, pluginCfg io.Reader) error
 		Level:      hclog.Debug,
 		JSONFormat: true,
 	})
-	fmt.Println("CONNECTING TO PLUGIN CLIENT")
 	c.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: plugin.HandshakeConfig{
 			ProtocolVersion:  c.pluginType.ProtocolVersion,
@@ -202,7 +197,6 @@ func (c *PluginConnection) GetClient() interface{} {
 // plugin process closes. Pass a context to control the graceful shutdown of the
 // plugin.
 func (c *PluginConnection) Close(ctx context.Context) error {
-	fmt.Println("CLOSING PLUGIN CONNECTION")
 	ctx, span := tracing.StartSpan(ctx,
 		attribute.String("plugin-key", c.key.String()))
 	defer span.EndSpan()
