@@ -24,10 +24,7 @@ func buildServerCommands(p *porter.Porter) *cobra.Command {
 }
 
 func buildServerRunCommand(p *porter.Porter) *cobra.Command {
-	opts := porter.ListOptions{}
-	grpcOpts := grpc.Config{
-		Port: 3333,
-	}
+	opts := porter.ServiceOptions{}
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run the gRPC server",
@@ -42,7 +39,7 @@ A list of the supported RPCs can be found at <link?>
 			return opts.Validate()
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			srv, err := grpc.NewServer(cmd.Context(), &grpcOpts)
+			srv, err := grpc.NewServer(cmd.Context(), &opts)
 			if err != nil {
 				return err
 			}
@@ -54,5 +51,8 @@ A list of the supported RPCs can be found at <link?>
 			return err
 		},
 	}
+	f := cmd.Flags()
+	f.Int32VarP(&opts.Port, "port", "p", 3001, "Port to run the server on")
+	f.StringVarP(&opts.ServiceName, "service-name", "s", "grpc-server", "Server service name")
 	return cmd
 }

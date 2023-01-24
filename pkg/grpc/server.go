@@ -45,7 +45,7 @@ func init() {
 
 type PorterGRPCService struct {
 	Porter      *porter.Porter
-	config      *Config
+	opts        *porter.ServiceOptions
 	ctx         context.Context
 	CalledCount *int
 }
@@ -55,14 +55,14 @@ type Config struct {
 	ServiceName string `mapstructure:"grpc-service-name"`
 }
 
-func NewServer(ctx context.Context, config *Config) (*PorterGRPCService, error) {
+func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCService, error) {
 	// log := tracing.LoggerFromContext(ctx)
 	// log.Debug("HELLO")
 	p := porter.New()
 	var c int
 	srv := &PorterGRPCService{
 		Porter:      p,
-		config:      config,
+		opts:        opts,
 		ctx:         ctx,
 		CalledCount: &c,
 	}
@@ -78,10 +78,10 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	}
 	defer s.Porter.Close()
 	defer log.EndSpan()
-	log.Infof("Starting gRPC on %v", s.config.Port)
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.config.Port))
+	log.Infof("Starting gRPC on %v", s.opts.Port)
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.opts.Port))
 	if err != nil {
-		return nil, fmt.Errorf("failed to listen on %d: %s", s.config.Port, err)
+		return nil, fmt.Errorf("failed to listen on %d: %s", s.opts.Port, err)
 	}
 	httpServer := &http.Server{Handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), Addr: fmt.Sprintf("0.0.0.0:%d", 9092)}
 
@@ -99,7 +99,7 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	}
 
 	pGRPC.RegisterPorterBundleServer(srv, isrv)
-	healthServer.SetServingStatus(s.config.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
+	healthServer.SetServingStatus(s.opts.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_prometheus.Register(srv)
 	go func() {
 		if err := srv.Serve(listener); err != nil {
