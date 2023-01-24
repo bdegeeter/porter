@@ -52,7 +52,7 @@ A list of the supported RPCs can be found at <link?>
 		},
 	}
 	f := cmd.Flags()
-	f.Int32VarP(&opts.Port, "port", "p", 3001, "Port to run the server on")
+	f.Int64VarP(&opts.Port, "port", "p", 3001, "Port to run the server on")
 	f.StringVarP(&opts.ServiceName, "service-name", "s", "grpc-server", "Server service name")
 	return cmd
 }

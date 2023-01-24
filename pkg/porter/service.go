@@ -1,7 +1,7 @@
 package porter
 
 type ServiceOptions struct {
-	Port        int32
+	Port        int64
 	ServiceName string
 }
 
