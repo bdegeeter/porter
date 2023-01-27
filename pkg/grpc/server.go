@@ -12,11 +12,14 @@ import (
 
 	//igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
+	pCtx "get.porter.sh/porter/pkg/grpc/context"
 	"get.porter.sh/porter/pkg/grpc/installation"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 
 	//"go.opentelemetry.io/otel/attribute"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -87,13 +90,15 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 
 	srv := grpc.NewServer(
 		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(grpcMetrics.UnaryServerInterceptor()),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpcMetrics.UnaryServerInterceptor(),
+			pCtx.NewConnectionInterceptor),
+		),
 	)
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	isrv, err := installation.NewPorterService(s.Porter)
-	//isrv, err := installation.NewPorterService()
+	isrv, err := installation.NewPorterService()
 	if err != nil {
 		panic(err)
 	}
