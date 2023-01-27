@@ -1,64 +1,92 @@
 syntax = "proto3";
 //option go_package = "get.porter.sh/porter/gen/proto/go/installation/v1alpha1";
+import "google/type/datetime.proto";
 package installation.v1alpha1;
-
-enum InstallationState {
-  INSTALLED = 0;
-  UNINSTALLED = 1;
-  DEFINED = 2;
-}
-
-enum InstallationStatus {
-  SUCCEEDED = 0;
-  FAILED = 1;
-  INSTALLING = 2;
-}
 
 message Bundle {
   string repository = 1;
   string version = 2;
 }
 
+message InstallationStatus {
+  string runId = 1;
+  string action = 2;
+  string resultId = 3;
+  string resultStatus = 4;
+  google.type.DateTime created = 5;
+  google.type.DateTime modified = 6;
+  google.type.DateTime installed = 7;
+  bool uninstalled = 8;
+  string bundleReference = 9;
+  string bundleVersion = 10;
+  string bundleDigest = 11;
+}
+
+message Calculated {
+  string resolvedParameters = 1;
+  string displayInstallationState = 2;
+  string displayInstallationStatus = 3;
+}
 message Installation {
   // Unique installation ID
   int64 id = 1;
   string name = 2;
   string namespace = 3;
-  Bundle bundle = 6;
-  InstallationState state = 4;
+  Bundle bundle = 4;
   InstallationStatus status = 5;
+  Calculated calculated = 6;
 }
 
 //Installations
 message ListInstallationsRequest {
   string name = 1;
-  string namespace = 2;
-  int64 limit = 3;
-  int64 skip = 4;
+  optional string namespace = 2;
+  optional int64 limit = 3;
+  optional int64 skip = 4;
   map<string, string> labels = 5;
+  optional bool allNamespaces = 6;
 }
 
 message ListInstallationsResponse {
   repeated Installation installation = 1; 
 }
 
-message InstallationRequest {
-  Installation installation = 1;
-}
-
-
 //InstallationRuns
 message InstallationRun {
   int64 id = 1;
-  Installation installation = 2;
+  string bundle = 2;
+  string version = 3;
+  string action = 4;
+  map<string, string> paramters = 5;
+  google.type.DateTime started = 6;
+  google.type.DateTime stopped = 7;
+  string status = 8;
+}
+
+message ListInstallationRunsRequest {
+  Installation installation = 1;
 }
 
 message ListInstallationRunsResponse {
   repeated InstallationRun run = 1;
 }
 
-message InstallationRunRequest {
-  InstallationRun run = 1;
+message InstallationOutput {
+  string name = 1;
+  string type = 2;
+  bool sensitive = 3;
+  string value = 4;
+}
+
+message InstallationOutputs {
+  repeated InstallationOutput output = 1;
+}
+
+message ListInstallationRunOutputRequest {
+  Installation installation = 1;
+  optional string runID = 2;
 }
 //InstallationRunOutputs
-message ListInstallationRunOutputsResponse {}
+message ListInstallationRunOutputResponse {
+  InstallationOutputs outputs = 1;
+}
