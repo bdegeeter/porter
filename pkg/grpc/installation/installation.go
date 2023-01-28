@@ -41,8 +41,8 @@ func (s *PorterServer) ListInstallations(ctx context.Context, in *iGRPC.ListInst
 				Version:    pInst.Bundle.Version,
 			},
 			//TODO: figure this out
-			State:  iGRPC.InstallationState_INSTALLED,
-			Status: iGRPC.InstallationStatus_SUCCEEDED,
+			// State:  iGRPC.InstallationState_INSTALLED,
+			// Status: iGRPC.InstallationStatus_SUCCEEDED,
 		}
 		insts = append(insts, &inst)
 

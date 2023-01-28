@@ -26,10 +26,10 @@ type PorterBundleClient interface {
 	// Returns a list of all installations
 	ListInstallations(ctx context.Context, in *v1alpha1.ListInstallationsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationsResponse, error)
 	// Returns a list of all runs for a single installation
-	ListInstallationRuns(ctx context.Context, in *v1alpha1.Installation, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error)
+	ListInstallationRuns(ctx context.Context, in *v1alpha1.ListInstallationRunsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error)
 	// Returns a list of all outputs for a single installation run
-	// Must support a "latest" run id
-	ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.InstallationRunRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputsResponse, error)
+	// Must support a "latest" if no run id specified
+	ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error)
 }
 
 type porterBundleClient struct {
@@ -49,7 +49,7 @@ func (c *porterBundleClient) ListInstallations(ctx context.Context, in *v1alpha1
 	return out, nil
 }
 
-func (c *porterBundleClient) ListInstallationRuns(ctx context.Context, in *v1alpha1.Installation, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error) {
+func (c *porterBundleClient) ListInstallationRuns(ctx context.Context, in *v1alpha1.ListInstallationRunsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error) {
 	out := new(v1alpha1.ListInstallationRunsResponse)
 	err := c.cc.Invoke(ctx, "/porter.v1alpha1.PorterBundle/ListInstallationRuns", in, out, opts...)
 	if err != nil {
@@ -58,8 +58,8 @@ func (c *porterBundleClient) ListInstallationRuns(ctx context.Context, in *v1alp
 	return out, nil
 }
 
-func (c *porterBundleClient) ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.InstallationRunRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputsResponse, error) {
-	out := new(v1alpha1.ListInstallationRunOutputsResponse)
+func (c *porterBundleClient) ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error) {
+	out := new(v1alpha1.ListInstallationRunOutputResponse)
 	err := c.cc.Invoke(ctx, "/porter.v1alpha1.PorterBundle/ListInstallationRunOutputs", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -74,10 +74,10 @@ type PorterBundleServer interface {
 	// Returns a list of all installations
 	ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error)
 	// Returns a list of all runs for a single installation
-	ListInstallationRuns(context.Context, *v1alpha1.Installation) (*v1alpha1.ListInstallationRunsResponse, error)
+	ListInstallationRuns(context.Context, *v1alpha1.ListInstallationRunsRequest) (*v1alpha1.ListInstallationRunsResponse, error)
 	// Returns a list of all outputs for a single installation run
-	// Must support a "latest" run id
-	ListInstallationRunOutputs(context.Context, *v1alpha1.InstallationRunRequest) (*v1alpha1.ListInstallationRunOutputsResponse, error)
+	// Must support a "latest" if no run id specified
+	ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error)
 	mustEmbedUnimplementedPorterBundleServer()
 }
 
@@ -88,10 +88,10 @@ type UnimplementedPorterBundleServer struct {
 func (UnimplementedPorterBundleServer) ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallations not implemented")
 }
-func (UnimplementedPorterBundleServer) ListInstallationRuns(context.Context, *v1alpha1.Installation) (*v1alpha1.ListInstallationRunsResponse, error) {
+func (UnimplementedPorterBundleServer) ListInstallationRuns(context.Context, *v1alpha1.ListInstallationRunsRequest) (*v1alpha1.ListInstallationRunsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationRuns not implemented")
 }
-func (UnimplementedPorterBundleServer) ListInstallationRunOutputs(context.Context, *v1alpha1.InstallationRunRequest) (*v1alpha1.ListInstallationRunOutputsResponse, error) {
+func (UnimplementedPorterBundleServer) ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationRunOutputs not implemented")
 }
 func (UnimplementedPorterBundleServer) mustEmbedUnimplementedPorterBundleServer() {}
@@ -126,7 +126,7 @@ func _PorterBundle_ListInstallations_Handler(srv interface{}, ctx context.Contex
 }
 
 func _PorterBundle_ListInstallationRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.Installation)
+	in := new(v1alpha1.ListInstallationRunsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -138,13 +138,13 @@ func _PorterBundle_ListInstallationRuns_Handler(srv interface{}, ctx context.Con
 		FullMethod: "/porter.v1alpha1.PorterBundle/ListInstallationRuns",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterBundleServer).ListInstallationRuns(ctx, req.(*v1alpha1.Installation))
+		return srv.(PorterBundleServer).ListInstallationRuns(ctx, req.(*v1alpha1.ListInstallationRunsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _PorterBundle_ListInstallationRunOutputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.InstallationRunRequest)
+	in := new(v1alpha1.ListInstallationRunOutputRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func _PorterBundle_ListInstallationRunOutputs_Handler(srv interface{}, ctx conte
 		FullMethod: "/porter.v1alpha1.PorterBundle/ListInstallationRunOutputs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterBundleServer).ListInstallationRunOutputs(ctx, req.(*v1alpha1.InstallationRunRequest))
+		return srv.(PorterBundleServer).ListInstallationRunOutputs(ctx, req.(*v1alpha1.ListInstallationRunOutputRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
