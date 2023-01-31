@@ -84,6 +84,7 @@ message InstallationOutputs {
 
 message ListInstallationRunOutputRequest {
   Installation installation = 1;
+  // If runID is not included then grab the latest run
   optional string runID = 2;
 }
 //InstallationRunOutputs
