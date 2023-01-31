@@ -25,5 +25,5 @@ func TestInstall_installationMessage(t *testing.T) {
 	instClient := pGRPC.NewPorterBundleClient(conn)
 	resp, err := instClient.ListInstallations(context.Background(), &iGRPC.ListInstallationsRequest{})
 	require.NoError(t, err)
-	assert.Equal(t, resp.String(), `installation:{name:"test installation" namespace:"foo" bundle:{repository:"test.repo" version:"v1.0.0"}}`)
+	assert.Equal(t, `installation:{name:"test installation" namespace:"foo" bundle:{repository:"test.repo" version:"v1.0.0"}}`, resp.String())
 }

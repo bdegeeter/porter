@@ -1,6 +1,7 @@
 syntax = "proto3";
 //option go_package = "get.porter.sh/porter/gen/proto/go/installation/v1alpha1";
-import "google/type/datetime.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 package installation.v1alpha1;
 
 message Bundle {
@@ -13,23 +14,23 @@ message InstallationStatus {
   string action = 2;
   string resultId = 3;
   string resultStatus = 4;
-  google.type.DateTime created = 5;
-  google.type.DateTime modified = 6;
-  google.type.DateTime installed = 7;
-  bool uninstalled = 8;
+  google.protobuf.Timestamp created = 5;
+  google.protobuf.Timestamp modified = 6;
+  google.protobuf.Timestamp installed = 7;
+  google.protobuf.Timestamp uninstalled = 8;
   string bundleReference = 9;
   string bundleVersion = 10;
   string bundleDigest = 11;
 }
 
 message Calculated {
-  string resolvedParameters = 1;
+  repeated PorterValue resolvedParameters = 1;
   string displayInstallationState = 2;
   string displayInstallationStatus = 3;
 }
 message Installation {
   // Unique installation ID
-  int64 id = 1;
+  string id = 1;
   string name = 2;
   string namespace = 3;
   Bundle bundle = 4;
@@ -58,8 +59,8 @@ message InstallationRun {
   string version = 3;
   string action = 4;
   map<string, string> paramters = 5;
-  google.type.DateTime started = 6;
-  google.type.DateTime stopped = 7;
+  google.protobuf.Timestamp started = 6;
+  google.protobuf.Timestamp stopped = 7;
   string status = 8;
 }
 
@@ -71,15 +72,15 @@ message ListInstallationRunsResponse {
   repeated InstallationRun run = 1;
 }
 
-message InstallationOutput {
+message PorterValue {
   string name = 1;
   string type = 2;
   bool sensitive = 3;
-  string value = 4;
+  google.protobuf.Any value = 4;
 }
 
 message InstallationOutputs {
-  repeated InstallationOutput output = 1;
+  repeated PorterValue output = 1;
 }
 
 message ListInstallationRunOutputRequest {
