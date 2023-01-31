@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
-
-	//"go.uber.org/zap"
-	//"go.uber.org/zap/zapcore"
+	"testing"
 
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
 	pCtx "get.porter.sh/porter/pkg/grpc/context"
@@ -22,42 +20,34 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
-type TestPorterGRPCService struct {
-	Porter *porter.Porter
+type TestPorterGRPCServer struct {
+	TestPorter *porter.TestPorter
+	t          *testing.T
 }
 
 const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
-func NewServer() (*TestPorterGRPCService, error) {
-	srv := &TestPorterGRPCService{}
+func NewTestGRPCServer(t *testing.T) (*TestPorterGRPCServer, error) {
+	srv := &TestPorterGRPCServer{
+		TestPorter: porter.NewTestPorter(t),
+	}
 	return srv, nil
 }
 
-func init() {
-	grpcSvc, _ := NewServer()
-	grpcSvc.ListenAndServe()
-}
-
-func newTestInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	p, err := pCtx.GetPorterConnectionFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	p.Config.SetPorterPath("porter")
-	ctx = pCtx.AddPorterConnectionToContext(p, ctx)
+func (s *TestPorterGRPCServer) newTestInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	ctx = pCtx.AddPorterConnectionToContext(s.TestPorter.Porter, ctx)
 	h, err := handler(ctx, req)
 	return h, err
 }
 
-func (s *TestPorterGRPCService) ListenAndServe() *grpc.Server {
+func (s *TestPorterGRPCServer) ListenAndServe() *grpc.Server {
 	lis = bufconn.Listen(bufSize)
 
 	srv := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			pCtx.NewConnectionInterceptor,
-			newTestInterceptor,
+			s.newTestInterceptor,
 		)))
 
 	healthServer := health.NewServer()

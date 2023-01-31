@@ -14,9 +14,11 @@ import (
 
 func TestInstall_installationMessage(t *testing.T) {
 	t.Parallel()
+	grpcSvr, _ := NewTestGRPCServer(t)
+	ctx := grpcSvr.TestPorter.SetupIntegrationTest()
+	grpcSvr.TestPorter.AddTestBundleDir("../integration/testdata/bundles/bundle-with-custom-action", true)
+	grpcSvr.ListenAndServe()
 
-	ctx := context.Background()
-	//ctx := portercontext.New()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
 		t.Fatalf("failed to dial bufnet: %v", err)
