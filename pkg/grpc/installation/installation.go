@@ -11,6 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 	"google.golang.org/protobuf/encoding/protojson"
+
 	//anypb "google.golang.org/protobuf/types/known/anypb"
 	tspb "google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -55,15 +56,35 @@ func makePorterValues(values porter.DisplayValues) []*iGRPC.PorterValue {
 	return retPVs
 }
 
+func jsonMakeInstResponse(inst porter.DisplayInstallation, gInst *iGRPC.Installation) error {
+	//bInst, err := json.Marshal(inst)
+	bInst, err := json.MarshalIndent(inst, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Printf("PORTER INSTALLATION:\n%s\n", string(bInst))
+	pjum := protojson.UnmarshalOptions{}
+	err = pjum.Unmarshal(bInst, gInst)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func makeInstResponse(inst porter.DisplayInstallation) *iGRPC.Installation {
 	var uninstTime *tspb.Timestamp
+	var instTime *tspb.Timestamp
 	if inst.Status.Uninstalled != nil {
 		uninstTime = tspb.New(*inst.Status.Uninstalled)
 	}
+	if inst.Status.Installed != nil {
+		instTime = tspb.New(*inst.Status.Installed)
+	}
 	return &iGRPC.Installation{
-		Id:        inst.ID,
-		Name:      inst.Name,
-		Namespace: inst.Namespace,
+		Id:            inst.ID,
+		Name:          inst.Name,
+		SchemaVersion: string(inst.SchemaVersion),
+		Namespace:     inst.Namespace,
 		Bundle: &iGRPC.Bundle{
 			Repository: inst.Bundle.Repository,
 			Version:    inst.Bundle.Version,
@@ -75,7 +96,7 @@ func makeInstResponse(inst porter.DisplayInstallation) *iGRPC.Installation {
 			ResultStatus:    inst.Status.ResultStatus,
 			Created:         tspb.New(inst.Status.Created),
 			Modified:        tspb.New(inst.Status.Modified),
-			Installed:       tspb.New(*inst.Status.Installed),
+			Installed:       instTime,
 			Uninstalled:     uninstTime,
 			BundleReference: inst.Status.BundleReference,
 			BundleVersion:   inst.Status.BundleVersion,
@@ -111,8 +132,13 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListIns
 	}
 	insts := []*iGRPC.Installation{}
 	for _, pInst := range installations {
-		inst := makeInstResponse(pInst)
-		insts = append(insts, inst)
+		//inst := makeInstResponse(pInst)
+		gInst := &iGRPC.Installation{}
+		err := jsonMakeInstResponse(pInst, gInst)
+		if err != nil {
+			return nil, err
+		}
+		insts = append(insts, gInst)
 	}
 	res := iGRPC.ListInstallationsResponse{
 		Installation: insts,

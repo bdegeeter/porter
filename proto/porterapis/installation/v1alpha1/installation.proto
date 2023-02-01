@@ -24,18 +24,20 @@ message InstallationStatus {
 }
 
 message Calculated {
-  repeated PorterValue resolvedParameters = 1;
-  string displayInstallationState = 2;
-  string displayInstallationStatus = 3;
+  string displayInstallationState = 1;
+  string displayInstallationStatus = 2;
+  repeated PorterValue resolvedParameters = 3;
 }
 message Installation {
   // Unique installation ID
   string id = 1;
-  string name = 2;
-  string namespace = 3;
-  Bundle bundle = 4;
-  InstallationStatus status = 5;
-  Calculated calculated = 6;
+  string schemaType = 2;
+  string schemaVersion = 3;
+  string name = 4;
+  string namespace = 5;
+  Bundle bundle = 6;
+  InstallationStatus status = 7;
+  Calculated calculated = 8 [json_name="_calculated"];
 }
 
 //Installations
