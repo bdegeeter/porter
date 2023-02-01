@@ -2,6 +2,7 @@ syntax = "proto3";
 //option go_package = "get.porter.sh/porter/gen/proto/go/installation/v1alpha1";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
 package installation.v1alpha1;
 
 message Bundle {
@@ -26,7 +27,7 @@ message InstallationStatus {
 message Calculated {
   string displayInstallationState = 1;
   string displayInstallationStatus = 2;
-  repeated PorterValue resolvedParameters = 3;
+  google.protobuf.NullValue resolvedParameters = 3;
 }
 message Installation {
   // Unique installation ID

@@ -11,9 +11,7 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 	"google.golang.org/protobuf/encoding/protojson"
-
 	//anypb "google.golang.org/protobuf/types/known/anypb"
-	tspb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // server is used to implement helloworld.GreeterServer.
@@ -57,58 +55,16 @@ func makePorterValues(values porter.DisplayValues) []*iGRPC.PorterValue {
 }
 
 func jsonMakeInstResponse(inst porter.DisplayInstallation, gInst *iGRPC.Installation) error {
-	//bInst, err := json.Marshal(inst)
-	bInst, err := json.MarshalIndent(inst, "", "  ")
+	bInst, err := json.Marshal(inst)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("PORTER INSTALLATION:\n%s\n", string(bInst))
 	pjum := protojson.UnmarshalOptions{}
 	err = pjum.Unmarshal(bInst, gInst)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func makeInstResponse(inst porter.DisplayInstallation) *iGRPC.Installation {
-	var uninstTime *tspb.Timestamp
-	var instTime *tspb.Timestamp
-	if inst.Status.Uninstalled != nil {
-		uninstTime = tspb.New(*inst.Status.Uninstalled)
-	}
-	if inst.Status.Installed != nil {
-		instTime = tspb.New(*inst.Status.Installed)
-	}
-	return &iGRPC.Installation{
-		Id:            inst.ID,
-		Name:          inst.Name,
-		SchemaVersion: string(inst.SchemaVersion),
-		Namespace:     inst.Namespace,
-		Bundle: &iGRPC.Bundle{
-			Repository: inst.Bundle.Repository,
-			Version:    inst.Bundle.Version,
-		},
-		Status: &iGRPC.InstallationStatus{
-			RunId:           inst.Status.RunID,
-			Action:          inst.Status.Action,
-			ResultId:        inst.Status.ResultID,
-			ResultStatus:    inst.Status.ResultStatus,
-			Created:         tspb.New(inst.Status.Created),
-			Modified:        tspb.New(inst.Status.Modified),
-			Installed:       instTime,
-			Uninstalled:     uninstTime,
-			BundleReference: inst.Status.BundleReference,
-			BundleVersion:   inst.Status.BundleVersion,
-			BundleDigest:    inst.Status.BundleDigest,
-		},
-		Calculated: &iGRPC.Calculated{
-			ResolvedParameters:        makePorterValues(inst.ResolvedParameters),
-			DisplayInstallationState:  inst.DisplayInstallationState,
-			DisplayInstallationStatus: inst.DisplayInstallationStatus,
-		},
-	}
-
 }
 
 func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListInstallationsRequest) (*iGRPC.ListInstallationsResponse, error) {
