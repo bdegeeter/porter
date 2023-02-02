@@ -9,7 +9,6 @@ import (
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 	"google.golang.org/protobuf/encoding/protojson"
-	//anypb "google.golang.org/protobuf/types/known/anypb"
 )
 
 func makeInstOptsLabels(labels map[string]string) []string {
@@ -43,7 +42,7 @@ func makePorterValues(values porter.DisplayValues) []*iGRPC.PorterValue {
 	return retPVs
 }
 
-func jsonMakeInstResponse(inst porter.DisplayInstallation, gInst *iGRPC.Installation) error {
+func makeGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPC.Installation) error {
 	bInst, err := json.Marshal(inst)
 	if err != nil {
 		return err
@@ -78,9 +77,8 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListIns
 	}
 	insts := []*iGRPC.Installation{}
 	for _, pInst := range installations {
-		//inst := makeInstResponse(pInst)
 		gInst := &iGRPC.Installation{}
-		err := jsonMakeInstResponse(pInst, gInst)
+		err := makeGRPCInstallation(pInst, gInst)
 		if err != nil {
 			return nil, err
 		}

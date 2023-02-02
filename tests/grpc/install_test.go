@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -13,12 +14,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func TestInstall_installationMessage(t *testing.T) {
 	t.Parallel()
-	grpcSvr, _ := NewTestGRPCServer(t)
+	ctx := context.Background()
+
+	//Server setup
+	grpcSvr, err := NewTestGRPCServer(t)
+	require.NoError(t, err)
+	server := grpcSvr.ListenAndServe()
+	defer server.Stop()
+
+	//Client setup
+	client, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	defer client.Close()
+	instClient := pGRPC.NewPorterClient(client)
+
+	//Create test installation
 	i1 := storage.NewInstallation("", "test")
 	storeInst := grpcSvr.TestPorter.TestInstallations.CreateInstallation(i1, grpcSvr.TestPorter.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
 		i.Status.BundleVersion = "v0.1.0"
@@ -28,18 +44,10 @@ func TestInstall_installationMessage(t *testing.T) {
 	})
 	expInst := porter.NewDisplayInstallation(storeInst)
 
-	ctx := grpcSvr.TestPorter.SetupIntegrationTest()
-	//ctx := context.Background()
-	grpcSvr.TestPorter.AddTestBundleDir("../integration/testdata/bundles/bundle-with-custom-action", true)
-	grpcSvr.ListenAndServe()
-
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-	instClient := pGRPC.NewPorterClient(conn)
+	//Call ListInstallations
 	resp, err := instClient.ListInstallations(ctx, &iGRPC.ListInstallationsRequest{})
+
+	// Validation
 	require.NoError(t, err)
 	assert.Len(t, resp.Installation, 1)
 	assert.Equal(t, resp.Installation[0].Name, expInst.Name)
