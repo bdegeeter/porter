@@ -4,7 +4,7 @@ package porter.v1alpha1;
 
 import "installation/v1alpha1/installation.proto";
 
-service PorterBundle {
+service Porter {
   //Returns a list of all installations
   rpc ListInstallations (installation.v1alpha1.ListInstallationsRequest) returns (installation.v1alpha1.ListInstallationsResponse) {}
 
