@@ -12,6 +12,7 @@ import (
 
 	//igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
+	"get.porter.sh/porter/pkg/config"
 	pserver "get.porter.sh/porter/pkg/grpc/portergrpc"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
@@ -46,32 +47,29 @@ func init() {
 }
 
 type PorterGRPCService struct {
-	Porter      *porter.Porter
-	opts        *porter.ServiceOptions
-	ctx         context.Context
-	CalledCount *int
+	PorterConfig *config.Config
+	opts         *porter.ServiceOptions
 }
 
+/*
 type Config struct {
 	Port        int    `mapstructure:"grpc-port"`
 	ServiceName string `mapstructure:"grpc-service-name"`
 }
+*/
 
 func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCService, error) {
-	p := porter.New()
-	var c int
+	pCfg := config.New()
 	srv := &PorterGRPCService{
-		Porter:      p,
-		opts:        opts,
-		ctx:         ctx,
-		CalledCount: &c,
+		PorterConfig: pCfg,
+		opts:         opts,
 	}
-
 	return srv, nil
 }
 
 func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
-	_, log := tracing.StartSpan(s.ctx)
+	ctx := context.TODO()
+	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	log.Infof("Starting gRPC on %v", s.opts.Port)
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", s.opts.Port))
@@ -81,7 +79,7 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	httpServer := &http.Server{Handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), Addr: fmt.Sprintf("0.0.0.0:%d", 9092)}
 
 	healthServer := health.NewServer()
-	psrv, err := pserver.NewPorterServer()
+	psrv, err := pserver.NewPorterServer(s.PorterConfig)
 	if err != nil {
 		panic(err)
 	}

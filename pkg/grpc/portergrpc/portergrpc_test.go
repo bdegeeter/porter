@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"get.porter.sh/porter/pkg/config"
 	"get.porter.sh/porter/pkg/porter"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,8 @@ import (
 )
 
 func TestNewConnectionInterceptorCallsNextHandlerInTheChainWithThePorterConnectionInTheContext(t *testing.T) {
-	srv := PorterServer{}
+	cfg := config.NewTestConfig(t)
+	srv := PorterServer{PorterConfig: cfg.Config}
 	parentUnaryInfo := &grpc.UnaryServerInfo{FullMethod: "SomeService.StreamMethod"}
 	input := "input"
 	testHandler := func(ctx context.Context, req interface{}) (interface{}, error) {

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
+	"get.porter.sh/porter/pkg/config"
 	pServer "get.porter.sh/porter/pkg/grpc/portergrpc"
 	"get.porter.sh/porter/pkg/porter"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -20,8 +21,9 @@ import (
 )
 
 type TestPorterGRPCServer struct {
-	TestPorter *porter.TestPorter
-	t          *testing.T
+	TestPorter       *porter.TestPorter
+	TestPorterConfig *config.TestConfig
+	t                *testing.T
 }
 
 const bufSize = 1024 * 1024
@@ -30,7 +32,8 @@ var lis *bufconn.Listener
 
 func NewTestGRPCServer(t *testing.T) (*TestPorterGRPCServer, error) {
 	srv := &TestPorterGRPCServer{
-		TestPorter: porter.NewTestPorter(t),
+		TestPorter:       porter.NewTestPorter(t),
+		TestPorterConfig: config.NewTestConfig(t),
 	}
 	return srv, nil
 }
@@ -52,11 +55,10 @@ func (s *TestPorterGRPCServer) ListenAndServe() *grpc.Server {
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	pSvc, err := pServer.NewPorterServer()
+	pSvc, err := pServer.NewPorterServer(s.TestPorter.Config)
 	if err != nil {
 		panic(err)
 	}
-	//pSvc.Porter.Config.SetPorterPath("porter")
 	pGRPC.RegisterPorterServer(srv, pSvc)
 	healthServer.SetServingStatus("test-health", grpc_health_v1.HealthCheckResponse_SERVING)
 

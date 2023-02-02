@@ -14,20 +14,18 @@ import (
 )
 
 type PorterServer struct {
+	PorterConfig *config.Config
 	pGRPC.UnimplementedPorterServer
 }
 
-func NewPorterServer() (*PorterServer, error) {
-	return &PorterServer{}, nil
+func NewPorterServer(cfg *config.Config) (*PorterServer, error) {
+	return &PorterServer{PorterConfig: cfg}, nil
 }
 
 func (s *PorterServer) NewConnectionInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	// Load some sane default?
-	pCfg := config.New()
-	storage := storage.NewPluginAdapter(storageplugin.NewStore(pCfg))
-	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(pCfg))
-
-	p := porter.NewFor(pCfg, storage, secretStorage)
+	storage := storage.NewPluginAdapter(storageplugin.NewStore(s.PorterConfig))
+	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(s.PorterConfig))
+	p := porter.NewFor(s.PorterConfig, storage, secretStorage)
 	err := p.Connect(ctx)
 	if err != nil {
 		return nil, err
