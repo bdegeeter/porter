@@ -58,8 +58,6 @@ type Config struct {
 }
 
 func NewServer(ctx context.Context, opts *porter.ServiceOptions) (*PorterGRPCService, error) {
-	// log := tracing.LoggerFromContext(ctx)
-	// log.Debug("HELLO")
 	p := porter.New()
 	var c int
 	srv := &PorterGRPCService{
@@ -82,22 +80,22 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 	}
 	httpServer := &http.Server{Handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), Addr: fmt.Sprintf("0.0.0.0:%d", 9092)}
 
-	srv := grpc.NewServer(
-		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpcMetrics.UnaryServerInterceptor(),
-			pserver.NewConnectionInterceptor),
-		),
-	)
 	healthServer := health.NewServer()
-	reflection.Register(srv)
-	grpc_health_v1.RegisterHealthServer(srv, healthServer)
 	psrv, err := pserver.NewPorterServer()
 	if err != nil {
 		panic(err)
 	}
+	srv := grpc.NewServer(
+		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpcMetrics.UnaryServerInterceptor(),
+			psrv.NewConnectionInterceptor),
+		),
+	)
+	reflection.Register(srv)
 
 	pGRPC.RegisterPorterServer(srv, psrv)
+	grpc_health_v1.RegisterHealthServer(srv, healthServer)
 	healthServer.SetServingStatus(s.opts.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_prometheus.Register(srv)
 	go func() {
