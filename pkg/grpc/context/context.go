@@ -23,7 +23,6 @@ func NewConnectionInterceptor(ctx context.Context, req interface{}, info *grpc.U
 	storage := storage.NewPluginAdapter(storageplugin.NewStore(pCfg))
 	secretStorage := secrets.NewPluginAdapter(secretsplugin.NewStore(pCfg))
 
-	//p := porter.New()
 	p := porter.NewFor(pCfg, storage, secretStorage)
 	err := p.Connect(ctx)
 	if err != nil {

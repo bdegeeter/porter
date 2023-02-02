@@ -71,6 +71,7 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListIns
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
 	p, err := pCtx.GetPorterConnectionFromContext(ctx)
+	// Maybe try to setup a new porter connection instead of erring?
 	if err != nil {
 		return nil, err
 	}

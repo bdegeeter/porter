@@ -34,11 +34,6 @@ func TestAddPorterConnectionToContextReturnsContextUpdatedWithPorterConnection(t
 	assert.Equal(t, p, newP)
 }
 
-// Have to figure out how to test
-func TestNewConnectionInterceptorReturnsErrorIfUnableToSetupPorterConnection(t *testing.T) {
-
-}
-
 func TestNewConnectionInterceptorCallsNextHandlerInTheChainWithThePorterConnectionInTheContext(t *testing.T) {
 	parentUnaryInfo := &grpc.UnaryServerInfo{FullMethod: "SomeService.StreamMethod"}
 	input := "input"
