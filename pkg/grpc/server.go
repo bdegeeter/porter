@@ -12,8 +12,7 @@ import (
 
 	//igrpc "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
-	pCtx "get.porter.sh/porter/pkg/grpc/context"
-	"get.porter.sh/porter/pkg/grpc/installation"
+	pserver "get.porter.sh/porter/pkg/grpc/portergrpc"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 
@@ -87,18 +86,18 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 		grpc.StreamInterceptor(grpcMetrics.StreamServerInterceptor()),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpcMetrics.UnaryServerInterceptor(),
-			pCtx.NewConnectionInterceptor),
+			pserver.NewConnectionInterceptor),
 		),
 	)
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	isrv, err := installation.NewPorterService()
+	psrv, err := pserver.NewPorterServer()
 	if err != nil {
 		panic(err)
 	}
 
-	pGRPC.RegisterPorterBundleServer(srv, isrv)
+	pGRPC.RegisterPorterBundleServer(srv, psrv)
 	healthServer.SetServingStatus(s.opts.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_prometheus.Register(srv)
 	go func() {

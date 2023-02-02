@@ -1,4 +1,4 @@
-package installation
+package portergrpc
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
 	"get.porter.sh/porter/pkg/cnab"
-	pCtx "get.porter.sh/porter/pkg/grpc/context"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
 	"github.com/google/uuid"
@@ -119,7 +118,7 @@ func setupTestPorterWithInstallations(t *testing.T, installations []instInfo) (c
 		})
 		insts[storeInst.ID] = porter.NewDisplayInstallation(storeInst)
 	}
-	ctx := pCtx.AddPorterConnectionToContext(p.Porter, context.TODO())
+	ctx := AddPorterConnectionToContext(p.Porter, context.TODO())
 	return ctx, insts
 }
 

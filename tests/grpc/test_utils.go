@@ -7,8 +7,7 @@ import (
 	"testing"
 
 	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
-	pCtx "get.porter.sh/porter/pkg/grpc/context"
-	"get.porter.sh/porter/pkg/grpc/installation"
+	pServer "get.porter.sh/porter/pkg/grpc/portergrpc"
 	"get.porter.sh/porter/pkg/porter"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 
@@ -37,7 +36,7 @@ func NewTestGRPCServer(t *testing.T) (*TestPorterGRPCServer, error) {
 }
 
 func (s *TestPorterGRPCServer) newTestInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	ctx = pCtx.AddPorterConnectionToContext(s.TestPorter.Porter, ctx)
+	ctx = pServer.AddPorterConnectionToContext(s.TestPorter.Porter, ctx)
 	h, err := handler(ctx, req)
 	return h, err
 }
@@ -53,7 +52,7 @@ func (s *TestPorterGRPCServer) ListenAndServe() *grpc.Server {
 	healthServer := health.NewServer()
 	reflection.Register(srv)
 	grpc_health_v1.RegisterHealthServer(srv, healthServer)
-	pSvc, err := installation.NewPorterService()
+	pSvc, err := pServer.NewPorterServer()
 	if err != nil {
 		panic(err)
 	}

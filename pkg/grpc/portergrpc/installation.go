@@ -1,4 +1,4 @@
-package installation
+package portergrpc
 
 import (
 	"context"
@@ -6,22 +6,11 @@ import (
 	"fmt"
 
 	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
-	pGRPC "get.porter.sh/porter/gen/proto/go/porterapis/porter/v1alpha1"
-	pCtx "get.porter.sh/porter/pkg/grpc/context"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/tracing"
 	"google.golang.org/protobuf/encoding/protojson"
 	//anypb "google.golang.org/protobuf/types/known/anypb"
 )
-
-// server is used to implement helloworld.GreeterServer.
-type PorterServer struct {
-	pGRPC.UnimplementedPorterBundleServer
-}
-
-func NewPorterService() (*PorterServer, error) {
-	return &PorterServer{}, nil
-}
 
 func makeInstOptsLabels(labels map[string]string) []string {
 	var retLabels []string
@@ -70,7 +59,7 @@ func jsonMakeInstResponse(inst porter.DisplayInstallation, gInst *iGRPC.Installa
 func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListInstallationsRequest) (*iGRPC.ListInstallationsResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
-	p, err := pCtx.GetPorterConnectionFromContext(ctx)
+	p, err := GetPorterConnectionFromContext(ctx)
 	// Maybe try to setup a new porter connection instead of erring?
 	if err != nil {
 		return nil, err
