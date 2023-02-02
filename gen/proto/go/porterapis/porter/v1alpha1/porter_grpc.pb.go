@@ -19,10 +19,10 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// PorterBundleClient is the client API for PorterBundle service.
+// PorterClient is the client API for Porter service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PorterBundleClient interface {
+type PorterClient interface {
 	// Returns a list of all installations
 	ListInstallations(ctx context.Context, in *v1alpha1.ListInstallationsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationsResponse, error)
 	// Returns a list of all runs for a single installation
@@ -32,45 +32,45 @@ type PorterBundleClient interface {
 	ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error)
 }
 
-type porterBundleClient struct {
+type porterClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPorterBundleClient(cc grpc.ClientConnInterface) PorterBundleClient {
-	return &porterBundleClient{cc}
+func NewPorterClient(cc grpc.ClientConnInterface) PorterClient {
+	return &porterClient{cc}
 }
 
-func (c *porterBundleClient) ListInstallations(ctx context.Context, in *v1alpha1.ListInstallationsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationsResponse, error) {
+func (c *porterClient) ListInstallations(ctx context.Context, in *v1alpha1.ListInstallationsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationsResponse, error) {
 	out := new(v1alpha1.ListInstallationsResponse)
-	err := c.cc.Invoke(ctx, "/porter.v1alpha1.PorterBundle/ListInstallations", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/porter.v1alpha1.Porter/ListInstallations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *porterBundleClient) ListInstallationRuns(ctx context.Context, in *v1alpha1.ListInstallationRunsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error) {
+func (c *porterClient) ListInstallationRuns(ctx context.Context, in *v1alpha1.ListInstallationRunsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error) {
 	out := new(v1alpha1.ListInstallationRunsResponse)
-	err := c.cc.Invoke(ctx, "/porter.v1alpha1.PorterBundle/ListInstallationRuns", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/porter.v1alpha1.Porter/ListInstallationRuns", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *porterBundleClient) ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error) {
+func (c *porterClient) ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error) {
 	out := new(v1alpha1.ListInstallationRunOutputResponse)
-	err := c.cc.Invoke(ctx, "/porter.v1alpha1.PorterBundle/ListInstallationRunOutputs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/porter.v1alpha1.Porter/ListInstallationRunOutputs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PorterBundleServer is the server API for PorterBundle service.
-// All implementations must embed UnimplementedPorterBundleServer
+// PorterServer is the server API for Porter service.
+// All implementations must embed UnimplementedPorterServer
 // for forward compatibility
-type PorterBundleServer interface {
+type PorterServer interface {
 	// Returns a list of all installations
 	ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error)
 	// Returns a list of all runs for a single installation
@@ -78,107 +78,107 @@ type PorterBundleServer interface {
 	// Returns a list of all outputs for a single installation run
 	// Must support a "latest" if no run id specified
 	ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error)
-	mustEmbedUnimplementedPorterBundleServer()
+	mustEmbedUnimplementedPorterServer()
 }
 
-// UnimplementedPorterBundleServer must be embedded to have forward compatible implementations.
-type UnimplementedPorterBundleServer struct {
+// UnimplementedPorterServer must be embedded to have forward compatible implementations.
+type UnimplementedPorterServer struct {
 }
 
-func (UnimplementedPorterBundleServer) ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error) {
+func (UnimplementedPorterServer) ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallations not implemented")
 }
-func (UnimplementedPorterBundleServer) ListInstallationRuns(context.Context, *v1alpha1.ListInstallationRunsRequest) (*v1alpha1.ListInstallationRunsResponse, error) {
+func (UnimplementedPorterServer) ListInstallationRuns(context.Context, *v1alpha1.ListInstallationRunsRequest) (*v1alpha1.ListInstallationRunsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationRuns not implemented")
 }
-func (UnimplementedPorterBundleServer) ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error) {
+func (UnimplementedPorterServer) ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationRunOutputs not implemented")
 }
-func (UnimplementedPorterBundleServer) mustEmbedUnimplementedPorterBundleServer() {}
+func (UnimplementedPorterServer) mustEmbedUnimplementedPorterServer() {}
 
-// UnsafePorterBundleServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PorterBundleServer will
+// UnsafePorterServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PorterServer will
 // result in compilation errors.
-type UnsafePorterBundleServer interface {
-	mustEmbedUnimplementedPorterBundleServer()
+type UnsafePorterServer interface {
+	mustEmbedUnimplementedPorterServer()
 }
 
-func RegisterPorterBundleServer(s grpc.ServiceRegistrar, srv PorterBundleServer) {
-	s.RegisterService(&PorterBundle_ServiceDesc, srv)
+func RegisterPorterServer(s grpc.ServiceRegistrar, srv PorterServer) {
+	s.RegisterService(&Porter_ServiceDesc, srv)
 }
 
-func _PorterBundle_ListInstallations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Porter_ListInstallations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1alpha1.ListInstallationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PorterBundleServer).ListInstallations(ctx, in)
+		return srv.(PorterServer).ListInstallations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/porter.v1alpha1.PorterBundle/ListInstallations",
+		FullMethod: "/porter.v1alpha1.Porter/ListInstallations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterBundleServer).ListInstallations(ctx, req.(*v1alpha1.ListInstallationsRequest))
+		return srv.(PorterServer).ListInstallations(ctx, req.(*v1alpha1.ListInstallationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PorterBundle_ListInstallationRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Porter_ListInstallationRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1alpha1.ListInstallationRunsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PorterBundleServer).ListInstallationRuns(ctx, in)
+		return srv.(PorterServer).ListInstallationRuns(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/porter.v1alpha1.PorterBundle/ListInstallationRuns",
+		FullMethod: "/porter.v1alpha1.Porter/ListInstallationRuns",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterBundleServer).ListInstallationRuns(ctx, req.(*v1alpha1.ListInstallationRunsRequest))
+		return srv.(PorterServer).ListInstallationRuns(ctx, req.(*v1alpha1.ListInstallationRunsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PorterBundle_ListInstallationRunOutputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Porter_ListInstallationRunOutputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1alpha1.ListInstallationRunOutputRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PorterBundleServer).ListInstallationRunOutputs(ctx, in)
+		return srv.(PorterServer).ListInstallationRunOutputs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/porter.v1alpha1.PorterBundle/ListInstallationRunOutputs",
+		FullMethod: "/porter.v1alpha1.Porter/ListInstallationRunOutputs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterBundleServer).ListInstallationRunOutputs(ctx, req.(*v1alpha1.ListInstallationRunOutputRequest))
+		return srv.(PorterServer).ListInstallationRunOutputs(ctx, req.(*v1alpha1.ListInstallationRunOutputRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// PorterBundle_ServiceDesc is the grpc.ServiceDesc for PorterBundle service.
+// Porter_ServiceDesc is the grpc.ServiceDesc for Porter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var PorterBundle_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "porter.v1alpha1.PorterBundle",
-	HandlerType: (*PorterBundleServer)(nil),
+var Porter_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "porter.v1alpha1.Porter",
+	HandlerType: (*PorterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ListInstallations",
-			Handler:    _PorterBundle_ListInstallations_Handler,
+			Handler:    _Porter_ListInstallations_Handler,
 		},
 		{
 			MethodName: "ListInstallationRuns",
-			Handler:    _PorterBundle_ListInstallationRuns_Handler,
+			Handler:    _Porter_ListInstallationRuns_Handler,
 		},
 		{
 			MethodName: "ListInstallationRunOutputs",
-			Handler:    _PorterBundle_ListInstallationRunOutputs_Handler,
+			Handler:    _Porter_ListInstallationRunOutputs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

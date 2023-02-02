@@ -97,7 +97,7 @@ func (s *PorterGRPCService) ListenAndServe() (*grpc.Server, error) {
 		panic(err)
 	}
 
-	pGRPC.RegisterPorterBundleServer(srv, psrv)
+	pGRPC.RegisterPorterServer(srv, psrv)
 	healthServer.SetServingStatus(s.opts.ServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 	grpc_prometheus.Register(srv)
 	go func() {

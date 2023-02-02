@@ -38,7 +38,7 @@ func TestInstall_installationMessage(t *testing.T) {
 		t.Fatalf("failed to dial bufnet: %v", err)
 	}
 	defer conn.Close()
-	instClient := pGRPC.NewPorterBundleClient(conn)
+	instClient := pGRPC.NewPorterClient(conn)
 	resp, err := instClient.ListInstallations(ctx, &iGRPC.ListInstallationsRequest{})
 	require.NoError(t, err)
 	assert.Len(t, resp.Installation, 1)
