@@ -37,8 +37,10 @@ message Installation {
   string name = 4;
   string namespace = 5;
   Bundle bundle = 6;
-  InstallationStatus status = 7;
-  Calculated calculated = 8 [json_name="_calculated"];
+  repeated string credentialSets = 7;
+  repeated string parameterSets = 8;
+  InstallationStatus status = 9;
+  Calculated calculated = 10 [json_name="_calculated"];
 }
 
 //Installations
