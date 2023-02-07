@@ -95,5 +95,5 @@ message ListInstallationLatestOutputRequest {
 
 //InstallationRunOutputs
 message ListInstallationLatestOutputResponse {
-  InstallationOutputs outputs = 1;
+  repeated PorterValue outputs = 1;
 }

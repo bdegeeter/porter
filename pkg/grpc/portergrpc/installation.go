@@ -46,32 +46,26 @@ func makeGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPC.Installa
 	bInst, err := json.Marshal(inst)
 	if err != nil {
 		return err
+		return fmt.Errorf("porter.DisplayInstallation marshal error: %e", err)
 	}
 	pjum := protojson.UnmarshalOptions{}
 	err = pjum.Unmarshal(bInst, gInst)
 	if err != nil {
-		return err
+		return fmt.Errorf("installation GRPC Installation unmarshal error: %e", err)
 	}
 	return nil
 }
 
-func makeGRPCInstallationOutputs(dv porter.DisplayValues, gInstOuts *iGRPC.InstallationOutputs) error {
-	pjum := protojson.UnmarshalOptions{}
-
-	gPorterValues := []*iGRPC.PorterValue{}
-	for _, v := range dv {
-		gInstOut := &iGRPC.PorterValue{}
-		bInstOut, err := json.Marshal(v)
-		if err != nil {
-			return fmt.Errorf("PorterValue marshal error: %e", err)
-		}
-		err = pjum.Unmarshal(bInstOut, gInstOut)
-		if err != nil {
-			return fmt.Errorf("installation GRPC InstallationOutputs unmarshal error: %e", err)
-		}
-		gPorterValues = append(gPorterValues, gInstOut)
+func makeGRPCInstallationOutput(dv porter.DisplayValue, gInstOut *iGRPC.PorterValue) error {
+	bInstOut, err := json.Marshal(dv)
+	if err != nil {
+		return fmt.Errorf("PorterValue marshal error: %e", err)
 	}
-	gInstOuts.Output = gPorterValues
+	pjum := protojson.UnmarshalOptions{}
+	err = pjum.Unmarshal(bInstOut, gInstOut)
+	if err != nil {
+		return fmt.Errorf("installation GRPC InstallationOutputs unmarshal error: %e", err)
+	}
 	return nil
 }
 
@@ -127,10 +121,14 @@ func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *i
 	if err != nil {
 		return nil, err
 	}
-	gInstOuts := &iGRPC.InstallationOutputs{}
-	err = makeGRPCInstallationOutputs(pdv, gInstOuts)
-	if err != nil {
-		return nil, err
+	gInstOuts := []*iGRPC.PorterValue{}
+	for _, dv := range pdv {
+		gInstOut := &iGRPC.PorterValue{}
+		err = makeGRPCInstallationOutput(dv, gInstOut)
+		if err != nil {
+			return nil, err
+		}
+		gInstOuts = append(gInstOuts, gInstOut)
 	}
 	res := &iGRPC.ListInstallationLatestOutputResponse{
 		Outputs: gInstOuts,

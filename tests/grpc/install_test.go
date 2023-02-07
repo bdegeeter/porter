@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	iGRPC "get.porter.sh/porter/gen/proto/go/porterapis/installation/v1alpha1"
@@ -131,7 +132,7 @@ func TestInstall_installationMessage(t *testing.T) {
 			req := &iGRPC.ListInstallationLatestOutputRequest{Name: test.instName, Namespace: &test.instNamespace}
 			oresp, err := instClient.ListInstallationLatestOutputs(ctx, req)
 			require.NoError(t, err)
-			assert.Len(t, oresp.GetOutputs().GetOutput(), 2)
+			assert.Len(t, oresp.GetOutputs(), 2)
 
 			oOpts := &porter.OutputListOptions{}
 			oOpts.Name = test.instName
@@ -165,24 +166,18 @@ func validateInstallations(t *testing.T, expected storage.Installation, actual *
 func validateOutputs(t *testing.T, dvs porter.DisplayValues, actual *iGRPC.ListInstallationLatestOutputResponse) {
 	//Get expected json
 	bExpOuts, err := json.MarshalIndent(dvs, "", "  ")
-
-	//Get actual json response
-	pjm := protojson.MarshalOptions{EmitUnpopulated: true}
-	bActOuts, err := pjm.Marshal(actual.GetOutputs())
-	rActOuts := gjson.GetBytes(bActOuts, "output")
-	var pJson bytes.Buffer
-	//TODO: fix the layers of outputs in GRPC Response
-	//json.Indent(&pJson, bActOuts, "", "  ")
-	json.Indent(&pJson, []byte(rActOuts.String()), "", "  ")
-	if true {
-		fmt.Printf("GET OUTPUTS: %+v\n", actual.GetOutputs())
-		fmt.Printf("GET OUTPUT: %+v\n", actual.GetOutputs().GetOutput())
-
-		fmt.Printf("PORTER INSTALLATION Outputs:\n%s\n", string(bExpOuts))
-		fmt.Printf("GRPC INSTALLATION Outputs:\n%s\n", string(pJson.Bytes()))
-	}
 	require.NoError(t, err)
-	//TODO: fix the layers of outputs in GRPC Response
-	assert.JSONEq(t, string(bExpOuts), rActOuts.String())
-	//assert.JSONEq(t, string(bExpOuts), string(bActOuts))
+	pjm := protojson.MarshalOptions{EmitUnpopulated: true, Multiline: true, Indent: "  "}
+	//Get actual json response
+	for i, gPV := range actual.GetOutputs() {
+		bActOut, err := pjm.Marshal(gPV)
+		require.NoError(t, err)
+		//TODO: make this not dependant on order
+		bExpOut := gjson.GetBytes(bExpOuts, strconv.Itoa(i)).String()
+		if false {
+			fmt.Printf("PORTER INSTALLATION Outputs:\n%s\n", bExpOut)
+			fmt.Printf("GRPC INSTALLATION Outputs:\n%s\n", string(bActOut))
+		}
+		assert.JSONEq(t, bExpOut, string(bActOut))
+	}
 }
