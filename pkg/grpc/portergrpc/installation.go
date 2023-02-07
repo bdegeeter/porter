@@ -55,6 +55,26 @@ func makeGRPCInstallation(inst porter.DisplayInstallation, gInst *iGRPC.Installa
 	return nil
 }
 
+func makeGRPCInstallationOutputs(dv porter.DisplayValues, gInstOuts *iGRPC.InstallationOutputs) error {
+	pjum := protojson.UnmarshalOptions{}
+
+	gPorterValues := []*iGRPC.PorterValue{}
+	for _, v := range dv {
+		gInstOut := &iGRPC.PorterValue{}
+		bInstOut, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Errorf("PorterValue marshal error: %e", err)
+		}
+		err = pjum.Unmarshal(bInstOut, gInstOut)
+		if err != nil {
+			return fmt.Errorf("installation GRPC InstallationOutputs unmarshal error: %e", err)
+		}
+		gPorterValues = append(gPorterValues, gInstOut)
+	}
+	gInstOuts.Output = gPorterValues
+	return nil
+}
+
 func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListInstallationsRequest) (*iGRPC.ListInstallationsResponse, error) {
 	ctx, log := tracing.StartSpan(ctx)
 	defer log.EndSpan()
@@ -88,4 +108,32 @@ func (s *PorterServer) ListInstallations(ctx context.Context, req *iGRPC.ListIns
 		Installation: insts,
 	}
 	return &res, nil
+}
+
+func (s *PorterServer) ListInstallationLatestOutputs(ctx context.Context, req *iGRPC.ListInstallationLatestOutputRequest) (*iGRPC.ListInstallationLatestOutputResponse, error) {
+	ctx, log := tracing.StartSpan(ctx)
+	defer log.EndSpan()
+	p, err := GetPorterConnectionFromContext(ctx)
+	// Maybe try to setup a new porter connection instead of erring?
+	if err != nil {
+		return nil, err
+	}
+
+	opts := porter.OutputListOptions{}
+	opts.Name = req.GetName()
+	opts.Namespace = req.GetNamespace()
+	opts.Format = "json"
+	pdv, err := p.ListBundleOutputs(ctx, &opts)
+	if err != nil {
+		return nil, err
+	}
+	gInstOuts := &iGRPC.InstallationOutputs{}
+	err = makeGRPCInstallationOutputs(pdv, gInstOuts)
+	if err != nil {
+		return nil, err
+	}
+	res := &iGRPC.ListInstallationLatestOutputResponse{
+		Outputs: gInstOuts,
+	}
+	return res, nil
 }

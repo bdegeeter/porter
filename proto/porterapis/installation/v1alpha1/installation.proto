@@ -81,19 +81,19 @@ message PorterValue {
   string name = 1;
   string type = 2;
   bool sensitive = 3;
-  google.protobuf.Any value = 4;
+  google.protobuf.Value value = 4;
 }
 
 message InstallationOutputs {
   repeated PorterValue output = 1;
 }
 
-message ListInstallationRunOutputRequest {
-  Installation installation = 1;
-  // If runID is not included then grab the latest run
-  optional string runID = 2;
+message ListInstallationLatestOutputRequest {
+  string name = 1;
+  optional string namespace = 2;
 }
+
 //InstallationRunOutputs
-message ListInstallationRunOutputResponse {
+message ListInstallationLatestOutputResponse {
   InstallationOutputs outputs = 1;
 }

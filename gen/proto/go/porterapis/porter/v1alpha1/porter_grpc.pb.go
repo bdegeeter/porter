@@ -25,11 +25,8 @@ const _ = grpc.SupportPackageIsVersion7
 type PorterClient interface {
 	// Returns a list of all installations
 	ListInstallations(ctx context.Context, in *v1alpha1.ListInstallationsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationsResponse, error)
-	// Returns a list of all runs for a single installation
-	ListInstallationRuns(ctx context.Context, in *v1alpha1.ListInstallationRunsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error)
-	// Returns a list of all outputs for a single installation run
-	// Must support a "latest" if no run id specified
-	ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error)
+	// Returns a list of all outputs for the latest installation run
+	ListInstallationLatestOutputs(ctx context.Context, in *v1alpha1.ListInstallationLatestOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationLatestOutputResponse, error)
 }
 
 type porterClient struct {
@@ -49,18 +46,9 @@ func (c *porterClient) ListInstallations(ctx context.Context, in *v1alpha1.ListI
 	return out, nil
 }
 
-func (c *porterClient) ListInstallationRuns(ctx context.Context, in *v1alpha1.ListInstallationRunsRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunsResponse, error) {
-	out := new(v1alpha1.ListInstallationRunsResponse)
-	err := c.cc.Invoke(ctx, "/porter.v1alpha1.Porter/ListInstallationRuns", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *porterClient) ListInstallationRunOutputs(ctx context.Context, in *v1alpha1.ListInstallationRunOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationRunOutputResponse, error) {
-	out := new(v1alpha1.ListInstallationRunOutputResponse)
-	err := c.cc.Invoke(ctx, "/porter.v1alpha1.Porter/ListInstallationRunOutputs", in, out, opts...)
+func (c *porterClient) ListInstallationLatestOutputs(ctx context.Context, in *v1alpha1.ListInstallationLatestOutputRequest, opts ...grpc.CallOption) (*v1alpha1.ListInstallationLatestOutputResponse, error) {
+	out := new(v1alpha1.ListInstallationLatestOutputResponse)
+	err := c.cc.Invoke(ctx, "/porter.v1alpha1.Porter/ListInstallationLatestOutputs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,11 +61,8 @@ func (c *porterClient) ListInstallationRunOutputs(ctx context.Context, in *v1alp
 type PorterServer interface {
 	// Returns a list of all installations
 	ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error)
-	// Returns a list of all runs for a single installation
-	ListInstallationRuns(context.Context, *v1alpha1.ListInstallationRunsRequest) (*v1alpha1.ListInstallationRunsResponse, error)
-	// Returns a list of all outputs for a single installation run
-	// Must support a "latest" if no run id specified
-	ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error)
+	// Returns a list of all outputs for the latest installation run
+	ListInstallationLatestOutputs(context.Context, *v1alpha1.ListInstallationLatestOutputRequest) (*v1alpha1.ListInstallationLatestOutputResponse, error)
 	mustEmbedUnimplementedPorterServer()
 }
 
@@ -88,11 +73,8 @@ type UnimplementedPorterServer struct {
 func (UnimplementedPorterServer) ListInstallations(context.Context, *v1alpha1.ListInstallationsRequest) (*v1alpha1.ListInstallationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListInstallations not implemented")
 }
-func (UnimplementedPorterServer) ListInstallationRuns(context.Context, *v1alpha1.ListInstallationRunsRequest) (*v1alpha1.ListInstallationRunsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationRuns not implemented")
-}
-func (UnimplementedPorterServer) ListInstallationRunOutputs(context.Context, *v1alpha1.ListInstallationRunOutputRequest) (*v1alpha1.ListInstallationRunOutputResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationRunOutputs not implemented")
+func (UnimplementedPorterServer) ListInstallationLatestOutputs(context.Context, *v1alpha1.ListInstallationLatestOutputRequest) (*v1alpha1.ListInstallationLatestOutputResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListInstallationLatestOutputs not implemented")
 }
 func (UnimplementedPorterServer) mustEmbedUnimplementedPorterServer() {}
 
@@ -125,38 +107,20 @@ func _Porter_ListInstallations_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Porter_ListInstallationRuns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.ListInstallationRunsRequest)
+func _Porter_ListInstallationLatestOutputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1alpha1.ListInstallationLatestOutputRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PorterServer).ListInstallationRuns(ctx, in)
+		return srv.(PorterServer).ListInstallationLatestOutputs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/porter.v1alpha1.Porter/ListInstallationRuns",
+		FullMethod: "/porter.v1alpha1.Porter/ListInstallationLatestOutputs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterServer).ListInstallationRuns(ctx, req.(*v1alpha1.ListInstallationRunsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Porter_ListInstallationRunOutputs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1alpha1.ListInstallationRunOutputRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PorterServer).ListInstallationRunOutputs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/porter.v1alpha1.Porter/ListInstallationRunOutputs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PorterServer).ListInstallationRunOutputs(ctx, req.(*v1alpha1.ListInstallationRunOutputRequest))
+		return srv.(PorterServer).ListInstallationLatestOutputs(ctx, req.(*v1alpha1.ListInstallationLatestOutputRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -173,12 +137,8 @@ var Porter_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Porter_ListInstallations_Handler,
 		},
 		{
-			MethodName: "ListInstallationRuns",
-			Handler:    _Porter_ListInstallationRuns_Handler,
-		},
-		{
-			MethodName: "ListInstallationRunOutputs",
-			Handler:    _Porter_ListInstallationRunOutputs_Handler,
+			MethodName: "ListInstallationLatestOutputs",
+			Handler:    _Porter_ListInstallationLatestOutputs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

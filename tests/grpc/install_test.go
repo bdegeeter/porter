@@ -12,6 +12,8 @@ import (
 	"get.porter.sh/porter/pkg/cnab"
 	"get.porter.sh/porter/pkg/porter"
 	"get.porter.sh/porter/pkg/storage"
+	"github.com/cnabio/cnab-go/bundle"
+	"github.com/cnabio/cnab-go/bundle/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
@@ -45,13 +47,43 @@ func grpcInstallationExpectedJSON(inst storage.Installation) ([]byte, error) {
 
 // TODO: add opts structure for different installation options
 func newTestInstallation(t *testing.T, namespace, name string, grpcSvr *TestPorterGRPCServer) storage.Installation {
-	i1 := storage.NewInstallation(namespace, name)
-	storeInst := grpcSvr.TestPorter.TestInstallations.CreateInstallation(i1, grpcSvr.TestPorter.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
+	writeOnly := true
+	b := bundle.Bundle{
+		Definitions: definition.Definitions{
+			"foo": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &writeOnly,
+			},
+			"bar": &definition.Schema{
+				Type:      "string",
+				WriteOnly: &writeOnly,
+			},
+		},
+		Outputs: map[string]bundle.Output{
+			"foo": {
+				Definition: "foo",
+				Path:       "/path/to/foo",
+			},
+			"bar": {
+				Definition: "bar",
+				Path:       "/path/to/bar",
+			},
+		},
+	}
+	extB := cnab.NewBundle(b)
+	storeInst := grpcSvr.TestPorter.TestInstallations.CreateInstallation(storage.NewInstallation(namespace, name), grpcSvr.TestPorter.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
 		i.Status.BundleVersion = "v0.1.0"
 		i.Status.ResultStatus = cnab.StatusSucceeded
 		i.Bundle.Repository = "test-bundle"
 		i.Bundle.Version = "v0.1.0"
 	})
+	c := grpcSvr.TestPorter.TestInstallations.CreateRun(storeInst.NewRun(cnab.ActionInstall), func(sRun *storage.Run) {
+		sRun.Bundle = b
+		sRun.ParameterOverrides.Parameters = grpcSvr.TestPorter.SanitizeParameters(sRun.ParameterOverrides.Parameters, sRun.ID, extB)
+	})
+	sRes := grpcSvr.TestPorter.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
+	grpcSvr.TestPorter.CreateOutput(sRes.NewOutput("foo", []byte("foo-output")), extB)
+	grpcSvr.TestPorter.CreateOutput(sRes.NewOutput("bar", []byte("bar-output")), extB)
 	return storeInst
 }
 
@@ -92,9 +124,24 @@ func TestInstall_installationMessage(t *testing.T) {
 			resp, err := instClient.ListInstallations(ctx, &iGRPC.ListInstallationsRequest{})
 			require.NoError(t, err)
 			assert.Len(t, resp.Installation, 1)
-
 			// Validation
 			validateInstallations(t, inst, resp.GetInstallation()[0])
+
+			//Call ListInstallationLatestOutputRequest
+			req := &iGRPC.ListInstallationLatestOutputRequest{Name: test.instName, Namespace: &test.instNamespace}
+			oresp, err := instClient.ListInstallationLatestOutputs(ctx, req)
+			require.NoError(t, err)
+			assert.Len(t, oresp.GetOutputs().GetOutput(), 2)
+
+			oOpts := &porter.OutputListOptions{}
+			oOpts.Name = test.instName
+			oOpts.Namespace = test.instNamespace
+			oOpts.Format = "json"
+			dvs, err := grpcSvr.TestPorter.ListBundleOutputs(ctx, oOpts)
+			require.NoError(t, err)
+
+			//Validation
+			validateOutputs(t, dvs, oresp)
 		})
 	}
 }
@@ -113,4 +160,29 @@ func validateInstallations(t *testing.T, expected storage.Installation, actual *
 	}
 	require.NoError(t, err)
 	assert.JSONEq(t, string(bExpInst), string(bActInst))
+}
+
+func validateOutputs(t *testing.T, dvs porter.DisplayValues, actual *iGRPC.ListInstallationLatestOutputResponse) {
+	//Get expected json
+	bExpOuts, err := json.MarshalIndent(dvs, "", "  ")
+
+	//Get actual json response
+	pjm := protojson.MarshalOptions{EmitUnpopulated: true}
+	bActOuts, err := pjm.Marshal(actual.GetOutputs())
+	rActOuts := gjson.GetBytes(bActOuts, "output")
+	var pJson bytes.Buffer
+	//TODO: fix the layers of outputs in GRPC Response
+	//json.Indent(&pJson, bActOuts, "", "  ")
+	json.Indent(&pJson, []byte(rActOuts.String()), "", "  ")
+	if true {
+		fmt.Printf("GET OUTPUTS: %+v\n", actual.GetOutputs())
+		fmt.Printf("GET OUTPUT: %+v\n", actual.GetOutputs().GetOutput())
+
+		fmt.Printf("PORTER INSTALLATION Outputs:\n%s\n", string(bExpOuts))
+		fmt.Printf("GRPC INSTALLATION Outputs:\n%s\n", string(pJson.Bytes()))
+	}
+	require.NoError(t, err)
+	//TODO: fix the layers of outputs in GRPC Response
+	assert.JSONEq(t, string(bExpOuts), rActOuts.String())
+	//assert.JSONEq(t, string(bExpOuts), string(bActOuts))
 }

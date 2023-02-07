@@ -8,10 +8,6 @@ service Porter {
   //Returns a list of all installations
   rpc ListInstallations (installation.v1alpha1.ListInstallationsRequest) returns (installation.v1alpha1.ListInstallationsResponse) {}
 
-  //Returns a list of all runs for a single installation
-  rpc ListInstallationRuns(installation.v1alpha1.ListInstallationRunsRequest) returns(installation.v1alpha1.ListInstallationRunsResponse) {}
-
-  //Returns a list of all outputs for a single installation run
-  //Must support a "latest" if no run id specified
-  rpc ListInstallationRunOutputs(installation.v1alpha1.ListInstallationRunOutputRequest) returns(installation.v1alpha1.ListInstallationRunOutputResponse) {}
+  //Returns a list of all outputs for the latest installation run
+  rpc ListInstallationLatestOutputs(installation.v1alpha1.ListInstallationLatestOutputRequest) returns(installation.v1alpha1.ListInstallationLatestOutputResponse) {}
 }
