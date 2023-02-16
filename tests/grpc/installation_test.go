@@ -46,30 +46,41 @@ func grpcInstallationExpectedJSON(inst storage.Installation) ([]byte, error) {
 	return bExpInst, nil
 }
 
+type testOutputOpt struct {
+	name         string
+	value        string
+	bundleOutput bundle.Output
+}
+type testInstallationOpts struct {
+	bundleDefs *map[string]*definition.Schema
+	outputs    *[]testOutputOpt
+}
+
 // TODO: add opts structure for different installation options
-func newTestInstallation(t *testing.T, namespace, name string, grpcSvr *TestPorterGRPCServer) storage.Installation {
-	writeOnly := true
+func newTestInstallation(t *testing.T, namespace, name string, grpcSvr *TestPorterGRPCServer, opts testInstallationOpts) storage.Installation {
+	//Bundle Definition with required porter-state
+	bd := definition.Definitions{
+		"porter-state": &definition.Schema{
+			Type:    "string",
+			Comment: "porter-internal",
+		},
+	}
+	for name, schema := range *opts.bundleDefs {
+		bd[name] = schema
+	}
+	//Bundle Output with required porter-state
+	bo := map[string]bundle.Output{
+		"porter-state": {
+			Definition: "porter-state",
+			Path:       "/cnab/app/outputs/porter-state.tgz",
+		},
+	}
+	for _, out := range *opts.outputs {
+		bo[out.name] = out.bundleOutput
+	}
 	b := bundle.Bundle{
-		Definitions: definition.Definitions{
-			"foo": &definition.Schema{
-				Type:      "string",
-				WriteOnly: &writeOnly,
-			},
-			"bar": &definition.Schema{
-				Type:      "string",
-				WriteOnly: &writeOnly,
-			},
-		},
-		Outputs: map[string]bundle.Output{
-			"foo": {
-				Definition: "foo",
-				Path:       "/path/to/foo",
-			},
-			"bar": {
-				Definition: "bar",
-				Path:       "/path/to/bar",
-			},
-		},
+		Definitions: bd,
+		Outputs:     bo,
 	}
 	extB := cnab.NewBundle(b)
 	storeInst := grpcSvr.TestPorter.TestInstallations.CreateInstallation(storage.NewInstallation(namespace, name), grpcSvr.TestPorter.TestInstallations.SetMutableInstallationValues, func(i *storage.Installation) {
@@ -83,24 +94,45 @@ func newTestInstallation(t *testing.T, namespace, name string, grpcSvr *TestPort
 		sRun.ParameterOverrides.Parameters = grpcSvr.TestPorter.SanitizeParameters(sRun.ParameterOverrides.Parameters, sRun.ID, extB)
 	})
 	sRes := grpcSvr.TestPorter.TestInstallations.CreateResult(c.NewResult(cnab.StatusSucceeded))
-	grpcSvr.TestPorter.CreateOutput(sRes.NewOutput("foo", []byte("foo-output")), extB)
-	grpcSvr.TestPorter.CreateOutput(sRes.NewOutput("bar", []byte("bar-output")), extB)
+	for _, out := range *opts.outputs {
+		grpcSvr.TestPorter.CreateOutput(sRes.NewOutput(out.name, []byte(out.value)), extB)
+	}
 	return storeInst
 }
 
 func TestInstall_installationMessage(t *testing.T) {
+	writeOnly := true
+	basicInstOpts := testInstallationOpts{
+		bundleDefs: &map[string]*definition.Schema{
+			"foo": {Type: "string", WriteOnly: &writeOnly},
+			"bar": {Type: "string", WriteOnly: &writeOnly},
+		},
+		outputs: &[]testOutputOpt{
+			{name: "foo",
+				value:        "foo-data",
+				bundleOutput: bundle.Output{Definition: "foo", Path: "/path/to/foo"},
+			},
+			{name: "bar",
+				value:        "bar-data",
+				bundleOutput: bundle.Output{Definition: "bar", Path: "/path/to/bar"},
+			},
+		},
+	}
 	tests := []struct {
 		testName      string
 		instName      string
 		instNamespace string ""
+		instOpts      testInstallationOpts
 	}{
 		{
 			testName: "basic installation",
 			instName: "test",
+			instOpts: basicInstOpts,
 		},
 		{
 			testName: "another installation",
 			instName: "another-test",
+			instOpts: basicInstOpts,
 		},
 	}
 	//t.Parallel()
@@ -119,7 +151,7 @@ func TestInstall_installationMessage(t *testing.T) {
 			defer client.Close()
 			instClient := pGRPC.NewPorterClient(client)
 
-			inst := newTestInstallation(t, test.instNamespace, test.instName, grpcSvr)
+			inst := newTestInstallation(t, test.instNamespace, test.instName, grpcSvr, test.instOpts)
 
 			//Call ListInstallations
 			resp, err := instClient.ListInstallations(ctx, &iGRPC.ListInstallationsRequest{})
@@ -132,7 +164,7 @@ func TestInstall_installationMessage(t *testing.T) {
 			req := &iGRPC.ListInstallationLatestOutputRequest{Name: test.instName, Namespace: &test.instNamespace}
 			oresp, err := instClient.ListInstallationLatestOutputs(ctx, req)
 			require.NoError(t, err)
-			assert.Len(t, oresp.GetOutputs(), 2)
+			assert.Len(t, oresp.GetOutputs(), len(*test.instOpts.outputs))
 
 			oOpts := &porter.OutputListOptions{}
 			oOpts.Name = test.instName
@@ -155,10 +187,6 @@ func validateInstallations(t *testing.T, expected storage.Installation, actual *
 	bActInst, err := pjm.Marshal(actual)
 	var pJson bytes.Buffer
 	json.Indent(&pJson, bActInst, "", "  ")
-	if false {
-		fmt.Printf("PORTER INSTALLATION:\n%s\n", string(bExpInst))
-		fmt.Printf("GRPC INSTALLATION:\n%s\n", string(pJson.Bytes()))
-	}
 	require.NoError(t, err)
 	assert.JSONEq(t, string(bExpInst), string(bActInst))
 }
@@ -174,10 +202,6 @@ func validateOutputs(t *testing.T, dvs porter.DisplayValues, actual *iGRPC.ListI
 		require.NoError(t, err)
 		//TODO: make this not dependant on order
 		bExpOut := gjson.GetBytes(bExpOuts, strconv.Itoa(i)).String()
-		if false {
-			fmt.Printf("PORTER INSTALLATION Outputs:\n%s\n", bExpOut)
-			fmt.Printf("GRPC INSTALLATION Outputs:\n%s\n", string(bActOut))
-		}
 		assert.JSONEq(t, bExpOut, string(bActOut))
 	}
 }
