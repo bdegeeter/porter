@@ -98,9 +98,15 @@ func BuildAgent() {
 	releases.XBuild(PKG, "agent", "bin", "linux", "amd64")
 }
 
+// Cross compile agent for multiple archs in linux
+func XBuildAgent() {
+	mg.Deps(BuildAgent)
+	releases.XBuild(PKG, "agent", "bin", "linux", "arm64")
+}
+
 // Cross-compile porter and the exec mixin
 func XBuildAll() {
-	mg.Deps(XBuildPorter, XBuildMixins, BuildAgent)
+	mg.Deps(XBuildPorter, XBuildMixins, XBuildAgent)
 }
 
 // Cross-compile porter
@@ -338,7 +344,6 @@ func buildImages(registry string, info releases.GitMetadata) {
 
 		return shx.Run("docker", "tag", img, fmt.Sprintf("%s/workshop:%s", registry, info.Permalink))
 	})
-
 	mgx.Must(g.Wait())
 }
 
@@ -372,6 +377,43 @@ func pushImagesTo(registry string, info releases.GitMetadata) {
 	} else {
 		fmt.Println("Skipping image publish for permalink", info.Permalink)
 	}
+}
+
+func PublishServerMultiArchImages() {
+	registry := getRegistry()
+	info := releases.LoadMetadata()
+	mgx.Must(buildAndPushServerMultiArch(registry, info))
+}
+
+func buildAndPushServerMultiArch(registry string, info releases.GitMetadata) error {
+	enableBuildKit := "DOCKER_BUILDKIT=1"
+	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
+	must.RunV("docker", "buildx", "create", "--use")
+	return shx.Command("docker", "buildx", "bake", "-f", "docker-bake.json", "--push", "--set", "server.tags="+img, "server").
+		Env(enableBuildKit).RunV()
+}
+
+// Build a local image for the server based off of local architecture
+func BuildLocalServerImage() {
+	registry := getRegistry()
+	info := releases.LoadMetadata()
+	goarch := runtime.GOARCH
+	buildServerImage(registry, info, goarch)
+}
+
+// Builds an image for the server based off of the goarch
+func buildServerImage(registry string, info releases.GitMetadata, goarch string) error {
+	var platform string
+	switch goarch {
+	case "arm64":
+		platform = "linux/arm64"
+	case "amd64":
+		platform = "linux/amd64"
+	}
+	enableBuildKit := "DOCKER_BUILDKIT=1"
+	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
+	return shx.Command("docker", "build", "-f", "build/images/server/Dockerfile", "-t", img, "--platform="+platform, ".").
+		Env(enableBuildKit).RunV()
 }
 
 func pushImages(registry string, tag string) {
