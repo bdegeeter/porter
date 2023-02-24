@@ -382,15 +382,13 @@ func pushImagesTo(registry string, info releases.GitMetadata) {
 func PublishServerMultiArchImages() {
 	registry := getRegistry()
 	info := releases.LoadMetadata()
-	mgx.Must(buildAndPushServerMultiArch(registry, info))
+	buildAndPushServerMultiArch(registry, info)
 }
 
-func buildAndPushServerMultiArch(registry string, info releases.GitMetadata) error {
-	enableBuildKit := "DOCKER_BUILDKIT=1"
+func buildAndPushServerMultiArch(registry string, info releases.GitMetadata) {
 	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
 	must.RunV("docker", "buildx", "create", "--use")
-	return shx.Command("docker", "buildx", "bake", "-f", "docker-bake.json", "--push", "--set", "server.tags="+img, "server").
-		Env(enableBuildKit).RunV()
+	must.RunV("docker", "buildx", "bake", "-f", "docker-bake.json", "--push", "--set", "server.tags="+img, "server")
 }
 
 // Build a local image for the server based off of local architecture
