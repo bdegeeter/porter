@@ -400,7 +400,7 @@ func BuildLocalServerImage() {
 }
 
 // Builds an image for the server based off of the goarch
-func buildServerImage(registry string, info releases.GitMetadata, goarch string) error {
+func buildServerImage(registry string, info releases.GitMetadata, goarch string) {
 	var platform string
 	switch goarch {
 	case "arm64":
@@ -408,10 +408,8 @@ func buildServerImage(registry string, info releases.GitMetadata, goarch string)
 	case "amd64":
 		platform = "linux/amd64"
 	}
-	enableBuildKit := "DOCKER_BUILDKIT=1"
 	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
-	return shx.Command("docker", "build", "-f", "build/images/server/Dockerfile", "-t", img, "--platform="+platform, ".").
-		Env(enableBuildKit).RunV()
+	must.RunV("docker", "build", "-f", "build/images/server/Dockerfile", "-t", img, "--platform="+platform, ".")
 }
 
 func pushImages(registry string, tag string) {
