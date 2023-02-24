@@ -407,6 +407,8 @@ func buildServerImage(registry string, info releases.GitMetadata, goarch string)
 		platform = "linux/arm64"
 	case "amd64":
 		platform = "linux/amd64"
+	default:
+		platform = "linux/amd64"
 	}
 	img := fmt.Sprintf("%s/server:%s", registry, info.Version)
 	must.RunV("docker", "build", "-f", "build/images/server/Dockerfile", "-t", img, "--platform="+platform, ".")
